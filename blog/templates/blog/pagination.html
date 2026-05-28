@@ -1,0 +1,65 @@
+{% if page_obj.has_other_pages %}
+<div class="pagination-container my-4">
+    <nav aria-label="Навигация по страницам">
+        <ul class="pagination d-flex flex-wrap justify-content-center gap-1 mb-0">
+            {% with current=page_obj.number total=page_obj.paginator.num_pages %}
+                <!-- Первая и предыдущая -->
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-link" aria-label="Первая">&laquo;&laquo;</a>
+            </li>
+            <li class="page-item">
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-link" aria-label="Предыдущая">&laquo;</a>
+            </li>
+        {% endif %}
+
+        <!-- Эллипс в начале -->
+        {% if current > 3 %}
+            <li class="page-item"><span class="page-link disabled">…</span></li>
+        {% endif %}
+
+        <!-- Страницы: текущая ±2 -->
+        {% for num in page_obj.paginator.page_range %}
+            {% if num >= current|add:"-2" and num <= current|add:"2" %}
+                {% if num == current %}
+                    <li class="page-item active" aria-current="page">
+                <span class="page-link">{{ num }}<span class="visually-hidden">(текущая)</span></span>
+            </li>
+                {% else %}
+                    <li class="page-item">
+                <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-link">{{ num }}</a>
+            </li>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+
+        <!-- Эллипс в конце -->
+        {% if current < total|add:"-2" %}
+            <li class="page-item"><span class="page-link disabled">…</span></li>
+        {% endif %}
+
+        <!-- Следующая и последняя -->
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-link" aria-label="Следующая">&raquo;</a>
+            </li>
+            <li class="page-item">
+                <a href="?page={{ total }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                   class="page-link" aria-label="Последняя">&raquo;&raquo;</a>
+            </li>
+        {% endif %}
+        {% endwith %}
+    </ul>
+</nav>
+
+<!-- Информация о странице -->
+<p class="text-center text-muted small mt-2">
+    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+    {% if page_obj.paginator.count %}(всего статей: {{ page_obj.paginator.count }}){% endif %}
+</p>
+</div>
+{% endif %}

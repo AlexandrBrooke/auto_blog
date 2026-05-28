@@ -1,0 +1,113 @@
+{% extends "blog/base.html" %}
+
+{% block title %}{{ article.title }} — DrivePro{% endblock %}
+
+{% block content %}
+    <article class="mb-5">
+        <h1 class="mb-3">{{ article.title }}</h1>
+
+        <p class="text-muted">
+            <i class="far fa-calendar-alt"></i> {{ article.publish|date:"d M Y" }} |
+            <i class="far fa-user"></i> <a href="#" class="text-decoration-none">{{ article.author.username }}</a> |
+            <i class="far fa-eye"></i> {{ article.views }} |
+            <i class="far fa-heart"></i> <span id="like-count">{{ article.likes.count }}</span>
+        </p>
+
+        {% if article.image %}
+            <img src="{{ article.image.url }}" class="img-fluid rounded mb-4" alt="{{ article.title }}"
+                 style="max-height: 400px; object-fit: cover;">
+        {% endif %}
+
+        <div class="content mt-4 fs-5">{{ article.content|linebreaks }}</div>
+
+        <!-- Кнопка лайка -->
+        <div class="mt-4">
+            <button id="like-btn" class="btn {% if is_liked %}btn-danger{% else %}btn-outline-light{% endif %}"
+                    data-url="{% url 'blog:like_article' article.slug %}"
+                    data-liked="{{ is_liked|yesno:'true,false' }}">
+                <i class="{% if is_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                <span id="like-text">{% if is_liked %}Отменить нравится{% else %}Нравится{% endif %}</span>
+            </button>
+        </div>
+
+        <!-- Теги -->
+        <div class="mt-4">
+            <strong>Теги:</strong>
+            {% for tag in article.tags.all %}
+                <a href="{% url 'blog:tag' tag.slug %}" class="badge bg-secondary text-decoration-none">
+                    {{ tag.name }}
+        </a>
+            {% endfor %}
+        </div>
+    </article>
+
+    <!-- Комментарии -->
+    <section class="mb-5">
+        <h4>Комментарии ({{ comments.count }})</h4>
+        {% for comment in comments %}
+            <div class="card bg-dark text-light border-0 mb-3">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-1">{{ comment.name }}</h6>
+            <small class="text-muted">{{ comment.created|date:"d M Y, H:i" }}</small>
+            <p class="card-text mt-2">{{ comment.body }}</p>
+        </div>
+        </div>
+        {% empty %}
+            <p class="text-muted">Пока нет комментариев.</p>
+        {% endfor %}
+    </section>
+
+    <!-- Форма комментария -->
+    <section>
+        <h4>Оставить комментарий</h4>
+        <form method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+            {% if field.errors %}
+                <div class="text-danger">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const btn = document.getElementById('like-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', function() {
+        fetch(btn.dataset.url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('like-count').textContent = data.likes;
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('#like-text');
+
+            if (data.liked) {
+                btn.classList.replace('btn-outline-light', 'btn-danger');
+                icon.className = 'fas fa-heart';
+                text.textContent = 'Отменить нравится';
+            } else {
+                btn.classList.replace('btn-danger', 'btn-outline-light');
+                icon.className = 'far fa-heart';
+                text.textContent = 'Нравится';
+            }
+        })
+        .catch(err => console.error('Ошибка:', err));
+    });
+});
+</script>
+{% endblock %}
