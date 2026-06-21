@@ -3,10 +3,7 @@
     <nav class="pagination-nav">
         <ul class="pagination-list">
             
-            {# 
-                КНОПКИ НАЗАД
-                Показываем, если есть предыдущая страница
-            #}
+
             {% if page_obj.has_previous %}
                 {# Кнопка "В начало" (первая страница) #}
                 <li class="pagination-item">
@@ -17,21 +14,11 @@
                     <a class="pagination-link" href="{% querystring page=page_obj.previous_page_number %}">‹</a>
                 </li>
             {% endif %}
-
-            {# 
-                ТЕКУЩАЯ СТРАНИЦА
-                Показываем номер текущей страницы и общее количество
-            #}
             <li class="pagination-item active">
                 <span class="pagination-link">
                     {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
                 </span>
             </li>
-
-            {# 
-                КНОПКИ ВПЕРЁД
-                Показываем, если есть следующая страница
-            #}
             {% if page_obj.has_next %}
                 {# Кнопка "Вперёд" (следующая страница) #}
                 <li class="pagination-item">
