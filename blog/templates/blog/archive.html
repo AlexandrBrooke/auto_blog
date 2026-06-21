@@ -1,142 +1,205 @@
-{% extends "blog/base.html" %}
+{% extends 'blog/base.html' %}
 
-{% block title %}Архив статей — DrivePro{% endblock %}
+{# Заголовок страницы #}
+{% block title %}Архив — DrivePro{% endblock %}
 
+{# Основное содержимое #}
 {% block content %}
-<!-- Заголовок -->
-<h2 class="text-center mb-5 text-white h3">Архив статей</h2>
 
-<!-- Фильтры -->
-<div class="row g-3 mb-4 justify-content-center">
-    <div class="col-lg-10 col-xl-8">
-        <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
-            <!-- Поиск -->
-            <div class="flex-grow-1" style="min-width: 200px;">
-                <label for="search" class="form-label text-muted small">Поиск</label>
-                <input type="text" id="search" name="q"
-                       class="form-control form-control-sm bg-dark border-secondary text-light"
-                       placeholder="По названию..." value="{{ request.GET.q|default:'' }}">
+{# Секция: Архив #}
+<section class="archive-page">
+    
+    {# Блок с заголовком архива #}
+    <div class="home-hero home-hero--compact archive-hero">
+        <div class="home-hero-copy">
+            <p class="hero-kicker">Архив материалов</p>
+            <h1 class="hero-title">Все статьи DrivePro в одном месте</h1>
+            <p class="hero-text">
+                Ищите материалы по названию, году, тегу или открывайте категории.
+            </p>
+        </div>
+    </div>
+
+    {# Блок: Категории (если они есть) #}
+    {% if categories %}
+        <section class="archive-categories">
+            <div class="section-head">
+                <h2 class="section-title">Категории</h2>
             </div>
 
-            <!-- Год -->
-            <div style="min-width: 100px;">
-                <label for="year" class="form-label text-muted small">Год</label>
-                <select name="year" id="year"
-                        class="form-select form-select-sm bg-dark border-secondary text-light">
-                    <option value="">Все</option>
-            {% for y in years %}
-                <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>
-                    {{ y }}
-                </option>
-            {% endfor %}
-                </select>
-            </div>
-
-            <!-- Категория -->
-            <div style="min-width: 130px;">
-                <label for="category" class="form-label text-muted small">Категория</label>
-                <select name="category" id="category"
-                        class="form-select form-select-sm bg-dark border-secondary text-light">
-            <option value="">Все</option>
-            {% for cat in categories %}
-                <option value="{{ cat.slug }}" {% if request.GET.category == cat.slug %}selected{% endif %}>
-                {{ cat.name }}
-                </option>
-            {% endfor %}
-                </select>
-            </div>
-
-            <!-- Кнопки -->
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-sm btn-outline-light">
-                    <i class="fas fa-filter"></i> Применить
-                </button>
-                {% if request.GET %}
-                    <a href="{% url 'blog:archive' %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-times"></i> Сбросить
+            {# Сетка с категориями #}
+            <div class="categories-grid">
+                {% for category in categories %}
+                    <a class="category-card" href="{{ category.get_absolute_url }}">
+                        <div class="category-card-body">
+                            {# Название категории #}
+                            <h3 class="category-card-title">{{ category.name }}</h3>
+                            {# Если есть описание - показываем, иначе стандартный текст #}
+                            {% if category.description %}
+                                <p class="category-card-text">{{ category.description|truncatechars:110 }}</p>
+                            {% else %}
+                                <p class="category-card-text">Смотреть статьи в этой категории.</p>
+                            {% endif %}
+                        </div>
+                        <span class="category-card-link">Открыть</span>
                     </a>
-                {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# Блок: Фильтры поиска #}
+    <div class="archive-filters-wrap">
+        <form method="get" class="archive-filters archive-filters--pretty">
+            
+            {# Заголовок поиска #}
+            <div class="search-banner">
+                <div class="search-banner-icon">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <div class="search-banner-copy">
+                    <h3 class="search-banner-title">Найти статью</h3>
+                    <p class="search-banner-text">
+                        Ищите по названию, году публикации и тегам — быстро и удобно.
+                    </p>
+                </div>
+            </div>
+
+            {# Поля фильтрации #}
+            <div class="filter-grid">
+                
+                {# Поле: Поиск по названию #}
+                <div class="filter-group filter-search">
+                    <label for="q" class="form-label">Поиск</label>
+                    <div class="input-icon-wrap">
+                        <i class="fa-solid fa-search input-icon"></i>
+                        <input type="text" id="q" name="q" value="{{ request.GET.q }}" placeholder="Название статьи">
+                    </div>
+                </div>
+
+                {# Поле: Фильтр по году #}
+                <div class="filter-group filter-year">
+                    <label for="year" class="form-label">Год</label>
+                    <select id="year" name="year">
+                        <option value="">Все</option>  {# Все годы #}
+                        {% for year in years %}
+                            {# Подсвечиваем выбранный год #}
+                            <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                {# Поле: Фильтр по тегу #}
+                <div class="filter-group filter-category">
+                    <label for="tag" class="form-label">Тег</label>
+                    <select id="tag" name="tag">
+                        <option value="">Все теги</option>  {# Все теги #}
+                        {% for tag in tags %}
+                            {# Подсвечиваем выбранный тег #}
+                            <option value="{{ tag.slug }}" {% if request.GET.tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {# Кнопки управления фильтрами #}
+            <div class="filter-actions filter-actions--pretty">
+                <button type="submit" class="btn-primary-custom">Фильтровать</button>  {# Применить фильтры #}
+                <a href="{% url 'blog:archive' %}" class="btn-secondary-custom">Сбросить</a>  {# Очистить все фильтры #}
             </div>
         </form>
     </div>
-</div>
 
-<!-- Список статей -->
-{% if articles %}
-    <div class="row g-4">
-        {% for article in articles %}
-            <div class="col-lg-6 col-md-12">
-                <article class="card h-100 bg-dark border-secondary shadow-sm hover-glow">
-                    <div class="card-body d-flex flex-column">
-                <!-- Заголовок -->
-                <h3 class="h5 mb-3">
-                    <a href="{% url 'blog:article_detail' article.slug %}"
-               class="text-white text-decoration-none fw-medium">
-                {{ article.title|truncatechars:80 }}
-            </a>
-        </h3>
+    {# Блок: Список статей #}
+    {% if articles %}
+        <div class="archive-grid">
+            {# Перебираем все статьи #}
+            {% for article in articles %}
+                <article class="archive-card archive-card--modern">
+                    
+                    {# Изображение статьи (если есть) #}
+                    {% if article.image %}
+                        <a href="{% url 'blog:article_detail' article.slug %}" class="archive-card-media">
+                            <img src="{{ article.image.url }}" alt="{{ article.title }}">
+                        </a>
+                    {% endif %}
 
-        <!-- Краткое содержание -->
-        <p class="card-text text-muted mb-3 flex-grow-1" style="font-size: 0.95rem;">
-            {{ article.content|truncatewords:25|safe }}
-        </p>
+                    {# Информация о статье #}
+                    <div class="archive-card-body">
+                        {# Верхняя часть: тип и дата #}
+                        <div class="archive-card-topline">
+                            <span class="tag-pill">Статья</span>
+                            <span class="archive-date">{{ article.publish|date:"d M Y" }}</span>
+                        </div>
 
-        <!-- Метаданные -->
-        <div class="d-flex flex-wrap gap-3 text-muted small">
-            <time datetime="{{ article.publish|date:'c' }}">
-                <i class="far fa-calendar-alt"></i>
-                {{ article.publish|date:"d M Y" }}
-            </time>
-            {% if article.category %}
-                <span>
-                    <i class="far fa-folder"></i>
-            {{ article.category }}
-        </span>
-            {% endif %}
-            <span>
-                <i class="far fa-user"></i>
-                {{ article.author.username|truncatechars:15 }}
-            </span>
-            <span>
-                <i class="far fa-eye"></i>
-                {{ article.views }}
-            </span>
-            {% if article.tags.all %}
-                <span class="ms-auto d-flex gap-1">
-                    {% for tag in article.tags.all|slice:":2" %}
-                <a href="?tag={{ tag.slug }}"
-                   class="badge bg-info text-dark text-decoration-none"
-                   style="font-size: 0.7rem;">
-                    {{ tag.name|truncatechars:10 }}
-        </a>
+                        {# Заголовок статьи (ссылка) #}
+                        <h2 class="archive-card-title">
+                            <a href="{% url 'blog:article_detail' article.slug %}">{{ article.title }}</a>
+                        </h2>
+
+                        {# Краткое описание (обрезаем до 180 символов) #}
+                        <p class="archive-card-text">
+                            {{ article.content|striptags|truncatechars:180 }}
+                        </p>
+
+                        {# Теги статьи #}
+                        <div class="archive-meta">
+                            {% if article.tags.all %}
+                                <div class="archive-tags">
+                                    {% for tag in article.tags.all %}
+                                        <a href="{% querystring tag=tag.slug page=None %}" class="tag-pill">{{ tag.name }}</a>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
             {% endfor %}
-        </span>
-            {% endif %}
         </div>
-    </div>
-</article>
-</div>
-        {% endfor %}
-    </div>
 
-    <!-- Пагинация -->
-    {% include "blog/pagination.html" %}
-{% else %}
-    <div class="text-center py-5">
-        <i class="far fa-archive fa-2x opacity-50 text-muted mb-3"></i>
-        <p class="text-muted mb-3">Нет статей, соответствующих вашему запросу.</p>
-        <a href="{% url 'blog:article_list' %}" class="btn btn-outline-secondary btn-sm">
-            ← Вернуться к списку статей
-        </a>
-    </div>
-{% endif %}
+        {# Блок: Пагинация (переключение страниц) #}
+        {% if is_paginated %}
+            <div class="pagination-container">
+                <nav class="pagination-nav">
+                    <ul class="pagination-list">
+                        {# Кнопка "В начало" #}
+                        {% if page_obj.has_previous %}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="{% querystring page=1 %}">«</a>
+                            </li>
+                            {# Кнопка "Назад" #}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="{% querystring page=page_obj.previous_page_number %}">‹</a>
+                            </li>
+                        {% endif %}
 
-<!-- Стиль: эффект при наведении -->
-<style>
-.hover-glow:hover {
-    border-color: #5a9eff;
-    box-shadow: 0 0 10px rgba(90, 158, 255, 0.2);
-    transition: all 0.2s ease;
-}
-</style>
+                        {# Текущая страница / Всего страниц #}
+                        <li class="pagination-item active">
+                            <span class="pagination-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {# Кнопка "Вперёд" #}
+                        {% if page_obj.has_next %}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="{% querystring page=page_obj.next_page_number %}">›</a>
+                            </li>
+                            {# Кнопка "В конец" #}
+                            <li class="pagination-item">
+                                <a class="pagination-link" href="{% querystring page=page_obj.paginator.num_pages %}">»</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+
+    {# Если статей нет - показываем сообщение #}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <p class="empty-state-text">По вашему запросу ничего не найдено.</p>
+            <a href="{% url 'blog:archive' %}" class="btn-primary-custom">Сбросить фильтры</a>
+        </div>
+    {% endif %}
+</section>
 {% endblock %}

@@ -1,42 +1,205 @@
-{% extends "blog/base.html" %}
+{# Шаблон главной страницы — показывает главный материал, список новых статей и сайдбар #}
+{% extends 'blog/base.html' %}
 
-
-{% block title %}Главная — DrivePro{% endblock %}
-
+{# Основное содержимое страницы #}
 {% block content %}
-    <!-- Поисковая строка -->
-    <form method="get" class="mb-4 d-flex">
-        <input type="text" name="q" value="{{ query|default:'' }}" class="form-control me-2"
-               placeholder="Поиск по статьям...">
-        <button type="submit" class="btn btn-outline-light">Найти</button>
-    </form>
 
-    <!-- Список статей -->
-    {% for article in page_obj %}
-        <div class="card mb-4 bg-dark text-light border-0 shadow-sm">
-            {% if article.image %}
-                <img src="{{ article.image.url }}" class="card-img-top" alt="{{ article.title }}"
-                     style="height: 200px; object-fit: cover;">
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">
-                    <a href="{% url 'blog:article_detail' article.slug %}">{{ article.title }}</a>
-                </h5>
-                <p class="card-text text-muted">{{ article.content|truncatewords:30 }}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small>
-                <i class="far fa-calendar-alt"></i> {{ article.publish|date:"d M Y" }} |
-                <i class="far fa-user"></i> {{ article.author.username }} |
-                <i class="far fa-eye"></i> {{ article.views }}
-            </small>
-            <a href="{% url 'blog:article_detail' article.slug %}" class="btn btn-sm btn-outline-primary">Читать</a>
+{# СЕКЦИЯ: ГЕРОЙ (ГЛАВНЫЙ БАННЕР) — приветственный блок с заголовком и кнопками навигации #}
+<section class="home-hero home-hero--compact">
+    <div class="home-hero-copy">
+        {# Категория/тема сайта #}
+        <p class="hero-kicker">🚗 Автомобили • Обзоры • Тесты</p>
+        
+        {# Главный заголовок сайта #}
+        <h1 class="hero-title">DrivePro — свежие обзоры автомобилей без лишнего шума</h1>
+        
+        {# Описание проекта #}
+        <p class="hero-text">
+            Коротко о главном: новые модели, понятные разборы и статьи, 
+            которые приятно читать и легко находить.
+        </p>
+        
+        {# Кнопки действий для навигации #}
+        <div class="hero-actions">
+            {# Ссылка на страницу архива #}
+            <a class="btn-primary-custom" href="{% url 'blog:archive' %}">📚 Открыть архив</a>
+            {# Ссылка-якорь на главный материал #}
+            <a class="btn-secondary-custom" href="#featured">⭐ Главный материал</a>
         </div>
     </div>
-</div>
-    {% empty %}
-        <p class="text-muted">Статьи не найдены.</p>
-    {% endfor %}
+</section>
 
-    <!-- Пагинация -->
-    {% include "blog/pagination.html" %}
+{# СЕКЦИЯ: РЕКОМЕНДУЕМЫЙ МАТЕРИАЛ — первая (самая свежая) статья отображается в большом формате #}
+<section class="featured-section" id="featured">
+    {# Заголовок секции и ссылка "Смотреть все" #}
+    <div class="section-head">
+        <h2 class="section-title">⭐ Рекомендуем</h2>
+        <a class="section-link" href="{% url 'blog:archive' %}">Смотреть все →</a>
+    </div>
+
+    {# Проверяем: есть ли статьи в базе данных #}
+    {% if latest_articles %}
+        {# Берём первую статью как главную (featured) #}
+        {% with featured=latest_articles|first %}
+        <article class="featured-card featured-card--compact">
+            
+            {# Блок с изображением статьи (ссылка на полную версию) #}
+            <a class="featured-media" href="{% url 'blog:article_detail' featured.slug %}">
+                {% if featured.image %}
+                    {# Если есть изображение — показываем #}
+                    <img src="{{ featured.image.url }}" class="featured-image" alt="{{ featured.title }}">
+                {% else %}
+                    {# Если нет изображения — показываем заглушку #}
+                    <div class="featured-image featured-image-empty"></div>
+                {% endif %}
+            </a>
+
+            {# Блок с текстовым содержимым статьи #}
+            <div class="featured-body">
+                {# Бейджи с информацией: тип и дата публикации #}
+                <div class="featured-badges">
+                    <span class="tag-pill">⭐ Главный материал</span>
+                    <span class="featured-date">{{ featured.publish|date:"d M Y" }}</span>
+                </div>
+
+                {# Заголовок статьи (ссылка на полную версию) #}
+                <h2 class="featured-title">
+                    <a href="{% url 'blog:article_detail' featured.slug %}">{{ featured.title }}</a>
+                </h2>
+
+                {# Краткое описание (обрезаем до 220 символов, удаляем HTML-теги) #}
+                <p class="featured-text">
+                    {{ featured.content|striptags|truncatechars:220 }}
+                </p>
+
+                {# Кнопка "Читать материал" #}
+                <div class="featured-footer">
+                    <a class="btn-action btn-action-primary" href="{% url 'blog:article_detail' featured.slug %}">
+                        Читать материал →
+                    </a>
+                </div>
+            </div>
+        </article>
+        {% endwith %}
+    {% endif %}
+</section>
+
+{# СЕКЦИЯ: ОСНОВНОЕ СОДЕРЖИМОЕ (ДВЕ КОЛОНКИ) — слева: список новых статей (кроме первой), справа: сайдбар с дополнительной информацией #}
+<section class="home-columns">
+    
+    {# ЛЕВАЯ КОЛОНКА: Новые статьи #}
+    <div class="home-main-column">
+        <div class="section-head">
+            <h2 class="section-title">📝 Новые статьи</h2>
+        </div>
+
+        {# Сетка статей в компактном формате (2 колонки) #}
+        <div class="articles-grid articles-grid--compact">
+            
+            {# Перебираем все статьи, КРОМЕ ПЕРВОЙ (slice:"1:") #}
+            {% for article in latest_articles|slice:"1:" %}
+                <article class="post-card post-card--compact">
+                    
+                    {# Ссылка на статью с изображением #}
+                    <a href="{% url 'blog:article_detail' article.slug %}">
+                        {% if article.image %}
+                            {# Если есть изображение — показываем #}
+                            <img src="{{ article.image.url }}" class="post-card-image" alt="{{ article.title }}">
+                        {% else %}
+                            {# Если нет изображения — показываем заглушку #}
+                            <div class="post-card-image post-card-image-empty"></div>
+                        {% endif %}
+                    </a>
+
+                    {# Текстовая часть карточки статьи #}
+                    <div class="post-card-body">
+                        {# Верхняя строка: тип и дата публикации #}
+                        <div class="post-card-topline">
+                            <span class="tag-pill">Статья</span>
+                            <span class="post-card-date">{{ article.publish|date:"d M Y" }}</span>
+                        </div>
+
+                        {# Заголовок статьи (ссылка на полную версию) #}
+                        <h3 class="post-card-title">
+                            <a href="{% url 'blog:article_detail' article.slug %}">{{ article.title }}</a>
+                        </h3>
+
+                        {# Краткое описание (обрезаем до 140 символов, удаляем HTML-теги) #}
+                        <p class="post-card-text">
+                            {{ article.content|striptags|truncatechars:140 }}
+                        </p>
+
+                        {# Кнопка "Читать" #}
+                        <div class="post-card-footer">
+                            <a class="btn-action btn-action-secondary" href="{% url 'blog:article_detail' article.slug %}">
+                                Читать →
+                            </a>
+                        </div>
+                    </div>
+                </article>
+                
+            {# Если статей нет (кроме featured) #}
+            {% empty %}
+                <div class="empty-state">
+                    <p class="empty-state-text">Пока нет статей для отображения.</p>
+                </div>
+            {% endfor %}
+            
+        </div>
+    </div>
+
+    {# ПРАВАЯ КОЛОНКА: Сайдбар #}
+    <aside class="home-side-column">
+        
+        {# БЛОК 1: Последние статьи (до 4 штук) #}
+        <div class="sidebar">
+            <h5>📋 Последние статьи</h5>
+            <div class="recent-list">
+                {# Перебираем до 4 последних статей #}
+                {% for article in latest_articles|slice:":4" %}
+                    <a href="{% url 'blog:article_detail' article.slug %}" class="recent-article">
+                        {# Изображение статьи или заглушка #}
+                        {% if article.image %}
+                            <img src="{{ article.image.url }}" class="article-img" alt="{{ article.title }}">
+                        {% else %}
+                            <div class="article-img article-img-empty"></div>
+                        {% endif %}
+                        {# Название и дата публикации #}
+                        <div class="recent-article-meta">
+                            <div class="recent-article-title">{{ article.title|truncatechars:36 }}</div>
+                            <div class="recent-article-date">{{ article.publish|date:"d M Y" }}</div>
+                        </div>
+                    </a>
+                {% empty %}
+                    <p class="text-muted">Нет статей</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# БЛОК 2: Облако тегов #}
+        <div class="sidebar">
+            <h5>🏷️ Теги</h5>
+            <div class="tag-cloud">
+                {# Перебираем все теги из базы данных #}
+                {% for tag in tags %}
+                    {# Ссылка на архив с фильтром по тегу #}
+                    <a href="{% url 'blog:archive' %}?tag={{ tag.slug }}">{{ tag.name }}</a>
+                {% empty %}
+                    <p class="text-muted">Тегов нет</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# БЛОК 3: Информация о проекте #}
+        <div class="sidebar">
+            <h5>ℹ️ О проекте</h5>
+            <p class="sidebar-text">
+                DrivePro — подборка обзоров, новостей и материалов для тех, 
+                кто любит автомобили и хочет читать о них без воды.
+            </p>
+        </div>
+        
+    </aside>
+    
+</section>
 {% endblock %}

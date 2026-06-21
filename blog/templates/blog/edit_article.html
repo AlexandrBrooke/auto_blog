@@ -1,84 +1,121 @@
 {% extends "blog/base.html" %}
+{% load static %}
 
-{% block title %}Редактировать статью — {{ article.title }}{% endblock %}
+{# Заголовок страницы #}
+{% block title %}Редактировать статью — DrivePro{% endblock %}
 
-
+{# Основное содержимое #}
 {% block content %}
-<!-- Заголовок -->
-<h2 class="mb-4 text-info">✏️ Редактировать статью</h2>
 
-<!-- Подсказка -->
-<div class="alert alert-info bg-dark border border-info mb-4 p-3" role="alert">
-    <i class="fas fa-lightbulb me-1"></i>
-    Вы редактируете статью "<strong>{{ article.title }}</strong>".
-    Последнее изменение: <strong>{{ article.updated|date:"d M Y, H:i" }}</strong>.
-</div>
+{# Секция: Форма редактирования статьи #}
+<section class="article-form-page">
+    
+    {# Шапка страницы #}
+    <div class="page-head">
+        <p class="hero-kicker">✏️ Редактор материалов</p>
+        <h1 class="page-title edit-title">Редактировать статью</h1>
+        <p class="page-lead">
+            Обновите заголовок, текст, теги или изображение статьи.
+        </p>
+    </div>
 
-<!-- Форма -->
-<form method="post" enctype="multipart/form-data" class="bg-dark p-4 rounded border border-secondary">
-    {% csrf_token %}
+    {# Форма для редактирования статьи #}
+    <form method="post" enctype="multipart/form-data" class="article-form" novalidate>
+        
+        {# Защита от CSRF-атак #}
+        {% csrf_token %}
+        
+        {# Ошибки формы (не связанные с конкретными полями) #}
+        {{ form.non_field_errors }}
 
-    {% for field in form %}
-        <div class="mb-4">
-            <!-- Метка с индикатором обязательности -->
-            <label for="{{ field.id_for_label }}" class="form-label text-info">
-                {{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}
-            </label>
-
-            <!-- Поле ввода -->
-            {{ field }}
-
-            <!-- Превью изображения -->
-            {% if field.name == "image" and article.image %}
-                <div class="mt-2">
-                    <p class="text-muted small mb-1">Текущее изображение:</p>
-                    <img src="{{ article.image.url }}" alt="Текущее" class="img-fluid rounded border border-secondary"
-                 style="max-height: 150px; object-fit: cover;">
-                </div>
-                <small class="text-muted d-block mt-2">Поддерживаемые форматы: JPG, PNG. Макс. размер — 5 МБ.</small>
-            {% endif %}
-
-            <!-- Ошибки и подсказки -->
-            {% if field.errors %}
-                <div class="text-danger small mt-1">
-                    <i class="fas fa-exclamation-triangle me-1"></i>{{ field.errors }}
-                </div>
-            {% endif %}
-            {% if field.help_text %}
-                <small class="text-muted d-block mt-1">{{ field.help_text|safe }}</small>
+        {# ===== Поле: Заголовок ===== #}
+        <div class="form-group">
+            {{ form.title.label_tag }}          {# Подпись к полю #}
+            <div class="form-field">{{ form.title }}</div>  {# Поле ввода #}
+            <div class="field-errors">{{ form.title.errors }}</div>  {# Ошибки #}
+            {% if form.title.help_text %}
+                <small class="form-hint">{{ form.title.help_text }}</small>  {# Подсказка #}
             {% endif %}
         </div>
-    {% endfor %}
 
-    <!-- Кнопки -->
-    <div class="d-flex gap-2 flex-wrap">
-        <button type="submit" class="btn btn-success px-4">
-            <i class="fas fa-save me-1"></i>Сохранить изменения
-        </button>
-        <a href="{% url 'blog:article_detail' article.slug %}" class="btn btn-secondary">
-            <i class="fas fa-times me-1"></i>Отмена
-        </a>
-    </div>
-</form>
+        {# ===== Поле: Слаг (URL) ===== #}
+        <div class="form-group">
+            {{ form.slug.label_tag }}
+            <div class="form-field">{{ form.slug }}</div>
+            <div class="field-errors">{{ form.slug.errors }}</div>
+            {% if form.slug.help_text %}
+                <small class="form-hint">{{ form.slug.help_text }}</small>
+            {% endif %}
+        </div>
 
-<!-- Скрипт превью изображения -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const input = document.querySelector('input[name="image"]');
-    const preview = document.getElementById('image-preview');
+        {# ===== Поле: Категория ===== #}
+        <div class="form-group">
+            {{ form.category.label_tag }}
+            <div class="form-field">{{ form.category }}</div>
+            <div class="field-errors">{{ form.category.errors }}</div>
+            {% if form.category.help_text %}
+                <small class="form-hint">{{ form.category.help_text }}</small>
+            {% endif %}
+        </div>
 
-    if (input && preview) {
-        input.addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = e => { preview.src = e.target.result; preview.classList.remove('d-none'); };
-                reader.readAsDataURL(file);
-            } else {
-                preview.classList.add('d-none');
-            }
-        });
-    }
-});
-</script>
+        {# ===== Поле: Теги ===== #}
+        <div class="form-group">
+            {{ form.tags.label_tag }}
+            <div class="form-field">{{ form.tags }}</div>
+            <div class="field-errors">{{ form.tags.errors }}</div>
+            {% if form.tags.help_text %}
+                <small class="form-hint">{{ form.tags.help_text }}</small>
+            {% endif %}
+        </div>
+
+        {# ===== Поле: Изображение ===== #}
+        <div class="form-group">
+            {{ form.image.label_tag }}
+            <div class="form-field">{{ form.image }}</div>
+            <div class="field-errors">{{ form.image.errors }}</div>
+
+            {# Если у статьи есть изображение - показываем его #}
+            {% if article.image %}
+                <div class="current-image-wrap">
+                    <small class="form-hint">Текущее изображение:</small>
+                    <img src="{{ article.image.url }}" alt="{{ article.title }}" class="current-image">
+                </div>
+            {% endif %}
+
+            {# Подсказка для поля изображения #}
+            {% if form.image.help_text %}
+                <small class="form-hint">{{ form.image.help_text }}</small>
+            {% endif %}
+        </div>
+
+        {# ===== Поле: Содержание статьи ===== #}
+        <div class="form-group">
+            {{ form.content.label_tag }}
+            <div class="form-field">{{ form.content }}</div>
+            <div class="field-errors">{{ form.content.errors }}</div>
+            {% if form.content.help_text %}
+                <small class="form-hint">{{ form.content.help_text }}</small>
+            {% endif %}
+        </div>
+
+        {# ===== Поле: Статус (черновик/опубликовано) ===== #}
+        <div class="form-group">
+            {{ form.status.label_tag }}
+            <div class="form-field">{{ form.status }}</div>
+            <div class="field-errors">{{ form.status.errors }}</div>
+            {% if form.status.help_text %}
+                <small class="form-hint">{{ form.status.help_text }}</small>
+            {% endif %}
+        </div>
+
+        {# ===== Кнопки управления ===== #}
+        <div class="form-actions">
+            {# Кнопка сохранения изменений #}
+            <button type="submit" class="btn-action btn-action-primary">Обновить</button>
+            
+            {# Ссылка на отмену - возврат к статье #}
+            <a href="{{ article.get_absolute_url }}" class="btn-action btn-action-secondary">Отмена</a>
+        </div>
+    </form>
+</section>
 {% endblock %}

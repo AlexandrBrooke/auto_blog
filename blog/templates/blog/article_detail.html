@@ -1,113 +1,157 @@
 {% extends "blog/base.html" %}
+{% load static %}
 
+{# Заголовок страницы = название статьи #}
 {% block title %}{{ article.title }} — DrivePro{% endblock %}
 
+{# Основное содержимое #}
 {% block content %}
-    <article class="mb-5">
-        <h1 class="mb-3">{{ article.title }}</h1>
 
-        <p class="text-muted">
-            <i class="far fa-calendar-alt"></i> {{ article.publish|date:"d M Y" }} |
-            <i class="far fa-user"></i> <a href="#" class="text-decoration-none">{{ article.author.username }}</a> |
-            <i class="far fa-eye"></i> {{ article.views }} |
-            <i class="far fa-heart"></i> <span id="like-count">{{ article.likes.count }}</span>
-        </p>
+{# Двухколоночная верстка #}
+<div class="page-layout">
+    
+    {# Левая колонка: статья и комментарии #}
+    <main class="content-area article-page">
+        <article class="article-shell">
+            
+            {# Заголовок статьи #}
+            <h1 class="article-title">{{ article.title }}</h1>
 
-        {% if article.image %}
-            <img src="{{ article.image.url }}" class="img-fluid rounded mb-4" alt="{{ article.title }}"
-                 style="max-height: 400px; object-fit: cover;">
-        {% endif %}
+            {# Информация о статье: автор, дата, просмотры, комментарии #}
+            <div class="article-meta">
+                <span>Автор: {{ article.author.username }}</span>
+                <span>{{ article.publish|date:"d.m.Y H:i" }}</span>
+                <span>{{ article.views }} просмотров</span>
+                <span>{{ comments|length }} комментариев</span>
+            </div>
 
-        <div class="content mt-4 fs-5">{{ article.content|linebreaks }}</div>
-
-        <!-- Кнопка лайка -->
-        <div class="mt-4">
-            <button id="like-btn" class="btn {% if is_liked %}btn-danger{% else %}btn-outline-light{% endif %}"
-                    data-url="{% url 'blog:like_article' article.slug %}"
-                    data-liked="{{ is_liked|yesno:'true,false' }}">
-                <i class="{% if is_liked %}fas{% else %}far{% endif %} fa-heart"></i>
-                <span id="like-text">{% if is_liked %}Отменить нравится{% else %}Нравится{% endif %}</span>
-            </button>
-        </div>
-
-        <!-- Теги -->
-        <div class="mt-4">
-            <strong>Теги:</strong>
-            {% for tag in article.tags.all %}
-                <a href="{% url 'blog:tag' tag.slug %}" class="badge bg-secondary text-decoration-none">
-                    {{ tag.name }}
-        </a>
-            {% endfor %}
-        </div>
-    </article>
-
-    <!-- Комментарии -->
-    <section class="mb-5">
-        <h4>Комментарии ({{ comments.count }})</h4>
-        {% for comment in comments %}
-            <div class="card bg-dark text-light border-0 mb-3">
-                <div class="card-body">
-                    <h6 class="card-subtitle mb-1">{{ comment.name }}</h6>
-            <small class="text-muted">{{ comment.created|date:"d M Y, H:i" }}</small>
-            <p class="card-text mt-2">{{ comment.body }}</p>
-        </div>
-        </div>
-        {% empty %}
-            <p class="text-muted">Пока нет комментариев.</p>
-        {% endfor %}
-    </section>
-
-    <!-- Форма комментария -->
-    <section>
-        <h4>Оставить комментарий</h4>
-        <form method="post">
-            {% csrf_token %}
-            {% for field in form %}
-                <div class="mb-3">
-                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                    {{ field }}
-            {% if field.errors %}
-                <div class="text-danger">{{ field.errors }}</div>
+            {# Изображение статьи (если есть) #}
+            {% if article.image %}
+                <img src="{{ article.image.url }}" alt="{{ article.title }}" class="article-image">
             {% endif %}
+
+            {# Текст статьи #}
+            <div class="article-content">
+                {{ article.content|linebreaks }}
+            </div>
+
+            {# Блок: Лайки #}
+            <div class="article-actions">
+                <form method="post" action="{% url 'blog:like_article' article.slug %}">
+                    {% csrf_token %}
+                    {# Кнопка лайка: активная если пользователь уже лайкнул #}
+                    <button type="submit" class="like-btn {% if user in article.likes.all %}like-btn-active{% else %}like-btn-inactive{% endif %}">
+                        ♥ {{ article.likes.count }}
+                    </button>
+                </form>
+            </div>
+
+            {# Блок: Теги статьи #}
+            <div class="article-tags">
+                {% for tag in article.tags.all %}
+                    <a href="{{ tag.get_absolute_url }}" class="tag-pill">{{ tag.name }}</a>
+                {% empty %}
+                    <p class="text-muted">Тегов нет.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        {# Секция: Комментарии #}
+        <section class="comments-section">
+            <h2 class="page-title">Комментарии</h2>
+
+            {# Перебираем все комментарии #}
+            {% for comment in comments %}
+                <div class="comment-card">
+                    <div class="comment-card-body">
+                        <h3 class="comment-name">{{ comment.name }}</h3>  {# Имя автора #}
+                        <div class="comment-date">{{ comment.created|date:"d.m.Y H:i" }}</div>  {# Дата #}
+                        <p class="comment-text">{{ comment.body|linebreaks }}</p>  {# Текст #}
+                    </div>
+                </div>
+            {% empty %}
+                {# Если комментариев нет #}
+                <div class="empty-state">
+                    <p class="empty-state-text">Комментариев пока нет.</p>
+                </div>
+            {% endfor %}
+        </section>
+
+        {# Секция: Форма добавления комментария #}
+        <section class="comment-form-section">
+            <h2 class="page-title">Добавить комментарий</h2>
+
+            <form method="post" class="comment-form">
+                {% csrf_token %}  {# Защита от CSRF #}
+                {{ form.non_field_errors }}  {# Ошибки формы #}
+
+                {# Поле: Имя #}
+                <div class="form-group">
+                    {{ form.name.label_tag }}
+                    <div class="form-field">{{ form.name }}</div>
+                    <div class="field-errors">{{ form.name.errors }}</div>
+                </div>
+
+                {# Поле: Email #}
+                <div class="form-group">
+                    {{ form.email.label_tag }}
+                    <div class="form-field">{{ form.email }}</div>
+                    <div class="field-errors">{{ form.email.errors }}</div>
+                </div>
+
+                {# Поле: Текст комментария #}
+                <div class="form-group">
+                    {{ form.body.label_tag }}
+                    <div class="form-field">{{ form.body }}</div>
+                    <div class="field-errors">{{ form.body.errors }}</div>
+                </div>
+
+                {# Кнопка отправки #}
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary-custom">Отправить</button>
+                </div>
+            </form>
+        </section>
+    </main>
+
+    {# Правая колонка: Сайдбар #}
+    <aside class="sidebar-area">
+        
+        {# Блок: Последние статьи #}
+        <div class="sidebar">
+            <h5>Последние статьи</h5>
+            <div class="recent-list">
+                {% for item in latest_articles %}
+                    <a href="{{ item.get_absolute_url }}" class="recent-article">
+                        {# Изображение или заглушка #}
+                        {% if item.image %}
+                            <img src="{{ item.image.url }}" class="article-img" alt="{{ item.title }}">
+                        {% else %}
+                            <div class="article-img article-img-empty"></div>
+                        {% endif %}
+                        {# Название и дата #}
+                        <div class="recent-article-meta">
+                            <div class="recent-article-title">{{ item.title|truncatechars:36 }}</div>
+                            <div class="recent-article-date">{{ item.publish|date:"d M Y" }}</div>
+                        </div>
+                    </a>
+                {% empty %}
+                    <p class="text-muted">Пока нет статей.</p>
+                {% endfor %}
+            </div>
         </div>
-        {% endfor %}
-            <button type="submit" class="btn btn-primary">Отправить</button>
-        </form>
-    </section>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const btn = document.getElementById('like-btn');
-    if (!btn) return;
-
-    btn.addEventListener('click', function() {
-        fetch(btn.dataset.url, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById('like-count').textContent = data.likes;
-            const icon = btn.querySelector('i');
-            const text = btn.querySelector('#like-text');
-
-            if (data.liked) {
-                btn.classList.replace('btn-outline-light', 'btn-danger');
-                icon.className = 'fas fa-heart';
-                text.textContent = 'Отменить нравится';
-            } else {
-                btn.classList.replace('btn-danger', 'btn-outline-light');
-                icon.className = 'far fa-heart';
-                text.textContent = 'Нравится';
-            }
-        })
-        .catch(err => console.error('Ошибка:', err));
-    });
-});
-</script>
+        {# Блок: Теги #}
+        <div class="sidebar">
+            <h5>Теги</h5>
+            <div class="tag-cloud">
+                {% for tag in tags %}
+                    <a href="{{ tag.get_absolute_url }}">{{ tag.name }}</a>
+                {% empty %}
+                    <p class="text-muted">Тегов нет.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </aside>
+</div>
 {% endblock %}
