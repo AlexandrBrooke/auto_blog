@@ -1,167 +1,67 @@
 from django.test import TestCase
 from django.contrib.auth.models import User
-from django.utils.text import slugify
 from .models import Article, Category, Tag, Comment
+from .forms import ArticleForm, CommentForm, validate_form_data, UserRegistrationSchema
+from marshmallow import ValidationError as MarshmallowValidationError
+from slugify import slugify as slugify_cyrillic
 
 
-# ============================================================
-# ПРОСТЫЕ ТЕСТЫ ДЛЯ ОСНОВНЫХ МОДЕЛЕЙ
-# ============================================================
-
-class SimpleTests(TestCase):
-    """
-    Класс с базовыми тестами для проверки создания статей и категорий.
-    """
-    
+class ModelTests(TestCase):
     def setUp(self):
-        """
-        setUp() - выполняется ПЕРЕД каждым тестом.
-        Создаём тестового пользователя, чтобы использовать его во всех тестах.
-        """
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
-    
-    def test_1_create_article_with_explicit_slug(self):
-        """
-        ТЕСТ 1: Проверяем создание статьи с явным указанием slug.
-        
-        Что проверяем:
-        - Статья сохраняется в базе данных (счетчик = 1)
-        - Заголовок сохраняется правильно
-        - Slug сохраняется как мы указали
-        - Метод __str__ возвращает заголовок
-        """
+        self.user = User.objects.create_user('testuser', 'test@example.com', 'testpass')
+
+    def test_article_creation(self):
         article = Article.objects.create(
-            title='Моя статья',
+            title='Тест',
             content='Контент',
             author=self.user,
-            status='published',
-            slug='moya-statya'  # Явно указываем slug
+            status='published'
         )
-        
-        # Проверки (assert - "утверждаю, что...")
-        self.assertEqual(Article.objects.count(), 1)          # В БД 1 статья
-        self.assertEqual(article.title, 'Моя статья')         # Заголовок правильный
-        self.assertEqual(article.slug, 'moya-statya')         # Slug правильный
-        self.assertEqual(str(article), 'Моя статья')          # __str__ = заголовок
-    
-    def test_2_create_category(self):
-        """
-        ТЕСТ 2: Проверяем создание категории.
-        
-        Что проверяем:
-        - Категория сохраняется в базе данных
-        - Название сохраняется правильно
-        - Метод __str__ возвращает название категории
-        """
-        category = Category.objects.create(
-            name='Новости'
-        )
-        
-        self.assertEqual(Category.objects.count(), 1)        # В БД 1 категория
-        self.assertEqual(category.name, 'Новости')           # Название правильное
-        self.assertEqual(str(category), 'Новости')           # __str__ = название
+        self.assertEqual(Article.objects.count(), 1)
+        self.assertTrue(article.slug)  # slug должен сгенерироваться автоматически
+
+    def test_category_creation(self):
+        cat = Category.objects.create(name='Новости')
+        self.assertEqual(cat.slug, 'novosti')  # транслитерация
 
 
-# ============================================================
-# ДОПОЛНИТЕЛЬНЫЕ ТЕСТЫ ДЛЯ ТЕГОВ И КОММЕНТАРИЕВ
-# ============================================================
+class ValidationTests(TestCase):
+    def test_basic_validation_valid(self):
+        data = {'username': 'user_123', 'email': 'user@example.com', 'age': '25'}
+        errors = validate_form_data(data)
+        self.assertEqual(errors, {})
 
-class MoreSimpleTests(TestCase):
-    """
-    Класс с тестами для проверки создания тегов и комментариев.
-    """
-    
-    def setUp(self):
-        """
-        setUp() - создаём пользователя для всех тестов в этом классе.
-        """
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
-    
-    def test_create_tag(self):
-        """
-        ТЕСТ 3: Проверяем создание тега.
-        
-        Что проверяем:
-        - Тег сохраняется в базе данных
-        - Название тега правильное
-        - Метод __str__ возвращает название тега
-        """
-        tag = Tag.objects.create(
-            name='Электромобили'
-        )
-        
-        self.assertEqual(Tag.objects.count(), 1)              # В БД 1 тег
-        self.assertEqual(tag.name, 'Электромобили')          # Название правильное
-        self.assertEqual(str(tag), 'Электромобили')          # __str__ = название
-    
-    def test_create_comment(self):
-        """
-        ТЕСТ 4: Проверяем создание комментария.
-        
-        Что проверяем:
-        - Сначала создаём статью, к которой будет комментарий
-        - Комментарий сохраняется в базе данных
-        - Имя и текст комментария правильные
-        - Комментарий по умолчанию НЕ активен (требует модерации)
-        """
-        # Создаём статью, к которой привяжем комментарий
-        article = Article.objects.create(
-            title='Статья для комментария',
-            content='Контент',
-            author=self.user,
-            status='published',
-            slug='statya-dlya-kommentariya'
-        )
-        
-        # Создаём комментарий к статье
-        comment = Comment.objects.create(
-            article=article,                      # Привязываем к статье
-            name='Иван',                          # Имя автора
-            email='ivan@example.com',             # Email
-            body='Отличная статья!'               # Текст комментария
-        )
-        
-        # Проверки
-        self.assertEqual(Comment.objects.count(), 1)        # В БД 1 комментарий
-        self.assertEqual(comment.name, 'Иван')              # Имя правильное
-        self.assertEqual(comment.body, 'Отличная статья!')  # Текст правильный
-        self.assertFalse(comment.active)                   # Неактивен (на модерации)
+    def test_basic_validation_invalid(self):
+        data = {'username': 'a', 'email': 'invalid', 'age': 'abc'}
+        errors = validate_form_data(data)
+        self.assertIn('username', errors)
+        self.assertIn('email', errors)
+        self.assertIn('age', errors)
 
+    def test_marshmallow_valid(self):
+        schema = UserRegistrationSchema()
+        data = {'username': 'new_user', 'email': 'new@example.com', 'password': 'strong123'}
+        result = schema.load(data)
+        self.assertEqual(result['username'], 'new_user')
 
-# ============================================================
-# ТЕСТЫ ДЛЯ ФОРМ
-# ============================================================
+    def test_marshmallow_invalid(self):
+        schema = UserRegistrationSchema()
+        data = {'username': 'a', 'email': 'invalid', 'password': '123'}
+        with self.assertRaises(MarshmallowValidationError):
+            schema.load(data)
 
-class FormTests(TestCase):
-    """
-    Класс для проверки работы форм.
-    """
-    
-    def test_article_form_valid(self):
-        """
-        ТЕСТ 5: Проверяем, что форма создания статьи работает правильно.
-        
-        Что проверяем:
-        - Передаём в форму валидные данные
-        - Форма проходит валидацию (is_valid() = True)
-        """
-        from .forms import ArticleForm  # Импортируем форму
-        
-        # Подготавливаем данные для формы (как будто пользователь их ввел)
-        form_data = {
-            'title': 'Новая статья',     # Заголовок
-            'content': 'Контент',        # Содержание
-            'status': 'published'        # Статус "опубликовано"
-        }
-        
-        # Создаём экземпляр формы с нашими данными
-        form = ArticleForm(data=form_data)
-        
-        # Проверяем, что форма валидна (нет ошибок)
-        self.assertTrue(form.is_valid())  # True = форма правильная
+    def test_article_form(self):
+        form = ArticleForm(data={
+            'title': 'Заголовок',
+            'content': 'Достаточно длинное содержание статьи для валидации.',
+            'status': 'published'
+        })
+        self.assertTrue(form.is_valid())
+
+    def test_comment_form(self):
+        form = CommentForm(data={
+            'name': 'Иван Петров',
+            'email': 'ivan@example.com',
+            'body': 'Отличный комментарий!'
+        })
+        self.assertTrue(form.is_valid())

@@ -1,0 +1,115 @@
+{% extends "blog/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Демонстрация базовой валидации</h2>
+    <p class="text-muted">Проверка данных с использованием регулярных выражений</p>
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if errors %}
+        <div class="alert alert-danger">
+            <h5>Найдены ошибки:</h5>
+            <ul class="mb-0">
+                {% for field, error in errors.items %}
+                    <li><strong>{{ field }}:</strong> {{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="username" class="form-label">Имя пользователя</label>
+            <input type="text" 
+                   name="username" 
+                   id="username" 
+                   class="form-control {% if errors.username %}is-invalid{% endif %}"
+                   value="{{ form_data.username|default:'' }}"
+                   placeholder="От 3 до 20 символов, только буквы, цифры и _"
+                   required>
+            {% if errors.username %}
+                <div class="invalid-feedback">{{ errors.username }}</div>
+            {% else %}
+                <div class="form-text">Только буквы, цифры и символ подчеркивания. 3-20 символов.</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" 
+                   name="email" 
+                   id="email" 
+                   class="form-control {% if errors.email %}is-invalid{% endif %}"
+                   value="{{ form_data.email|default:'' }}"
+                   placeholder="example@domain.com"
+                   required>
+            {% if errors.email %}
+                <div class="invalid-feedback">{{ errors.email }}</div>
+            {% else %}
+                <div class="form-text">Введите корректный email адрес.</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            <label for="age" class="form-label">Возраст</label>
+            <input type="number" 
+                   name="age" 
+                   id="age" 
+                   class="form-control {% if errors.age %}is-invalid{% endif %}"
+                   value="{{ form_data.age|default:'' }}"
+                   placeholder="0-120"
+                   min="0" 
+                   max="120">
+            {% if errors.age %}
+                <div class="invalid-feedback">{{ errors.age }}</div>
+            {% else %}
+                <div class="form-text">Число от 0 до 120.</div>
+            {% endif %}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Проверить данные</button>
+        <a href="{% url 'blog:demo_validation' %}" class="btn btn-secondary">Очистить</a>
+    </form>
+    
+    <div class="mt-5">
+        <h5>Примеры для тестирования:</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Валидные данные</h6>
+                        <ul class="mb-0">
+                            <li>username: <code>user_123</code></li>
+                            <li>email: <code>user@example.com</code></li>
+                            <li>age: <code>25</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Невалидные данные</h6>
+                        <ul class="mb-0">
+                            <li>username: <code>a</code> (слишком короткий)</li>
+                            <li>email: <code>invalid</code> (неверный формат)</li>
+                            <li>age: <code>abc</code> (не число)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,7 +8,7 @@
 <section class="home-hero home-hero--compact">
     <div class="home-hero-copy">
         {# Категория/тема сайта #}
-        <p class="hero-kicker">🚗 Автомобили • Обзоры • Тесты</p>
+        <p class="hero-kicker">Автомобили • Обзоры • Тесты</p>
         
         {# Главный заголовок сайта #}
         <h1 class="hero-title">DrivePro — свежие обзоры автомобилей без лишнего шума</h1>
@@ -22,9 +22,9 @@
         {# Кнопки действий для навигации #}
         <div class="hero-actions">
             {# Ссылка на страницу архива #}
-            <a class="btn-primary-custom" href="{% url 'blog:archive' %}">📚 Открыть архив</a>
+            <a class="btn-primary-custom" href="{% url 'blog:archive' %}">Открыть архив</a>
             {# Ссылка-якорь на главный материал #}
-            <a class="btn-secondary-custom" href="#featured">⭐ Главный материал</a>
+            <a class="btn-secondary-custom" href="#featured">Главный материал</a>
         </div>
     </div>
 </section>
@@ -33,7 +33,7 @@
 <section class="featured-section" id="featured">
     {# Заголовок секции и ссылка "Смотреть все" #}
     <div class="section-head">
-        <h2 class="section-title">⭐ Рекомендуем</h2>
+        <h2 class="section-title">Рекомендуем</h2>
         <a class="section-link" href="{% url 'blog:archive' %}">Смотреть все →</a>
     </div>
 
@@ -58,7 +58,7 @@
             <div class="featured-body">
                 {# Бейджи с информацией: тип и дата публикации #}
                 <div class="featured-badges">
-                    <span class="tag-pill">⭐ Главный материал</span>
+                    <span class="tag-pill">Главный материал</span>
                     <span class="featured-date">{{ featured.publish|date:"d M Y" }}</span>
                 </div>
 
@@ -90,7 +90,7 @@
     {# ЛЕВАЯ КОЛОНКА: Новые статьи #}
     <div class="home-main-column">
         <div class="section-head">
-            <h2 class="section-title">📝 Новые статьи</h2>
+            <h2 class="section-title">Новые статьи</h2>
         </div>
 
         {# Сетка статей в компактном формате (2 колонки) #}
@@ -153,7 +153,7 @@
         
         {# БЛОК 1: Последние статьи (до 4 штук) #}
         <div class="sidebar">
-            <h5>📋 Последние статьи</h5>
+            <h5>Последние статьи</h5>
             <div class="recent-list">
                 {# Перебираем до 4 последних статей #}
                 {% for article in latest_articles|slice:":4" %}
@@ -178,7 +178,7 @@
 
         {# БЛОК 2: Облако тегов #}
         <div class="sidebar">
-            <h5>🏷️ Теги</h5>
+            <h5>Теги</h5>
             <div class="tag-cloud">
                 {# Перебираем все теги из базы данных #}
                 {% for tag in tags %}
@@ -192,7 +192,7 @@
 
         {# БЛОК 3: Информация о проекте #}
         <div class="sidebar">
-            <h5>ℹ️ О проекте</h5>
+            <h5>О проекте</h5>
             <p class="sidebar-text">
                 DrivePro — подборка обзоров, новостей и материалов для тех, 
                 кто любит автомобили и хочет читать о них без воды.

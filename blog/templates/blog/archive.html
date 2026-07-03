@@ -1,15 +1,12 @@
 {% extends 'blog/base.html' %}
 
-{# Заголовок страницы #}
 {% block title %}Архив — DrivePro{% endblock %}
 
-{# Основное содержимое #}
 {% block content %}
 
-{# Секция: Архив #}
 <section class="archive-page">
     
-    {# Блок с заголовком архива #}
+    <!-- Блок с заголовком архива -->
     <div class="home-hero home-hero--compact archive-hero">
         <div class="home-hero-copy">
             <p class="hero-kicker">Архив материалов</p>
@@ -20,21 +17,17 @@
         </div>
     </div>
 
-    {# Блок: Категории (если они есть) #}
+    <!-- Блок: Категории -->
     {% if categories %}
         <section class="archive-categories">
             <div class="section-head">
                 <h2 class="section-title">Категории</h2>
             </div>
-
-            {# Сетка с категориями #}
             <div class="categories-grid">
                 {% for category in categories %}
                     <a class="category-card" href="{{ category.get_absolute_url }}">
                         <div class="category-card-body">
-                            {# Название категории #}
                             <h3 class="category-card-title">{{ category.name }}</h3>
-                            {# Если есть описание - показываем, иначе стандартный текст #}
                             {% if category.description %}
                                 <p class="category-card-text">{{ category.description|truncatechars:110 }}</p>
                             {% else %}
@@ -48,11 +41,9 @@
         </section>
     {% endif %}
 
-    {# Блок: Фильтры поиска #}
+    <!-- Блок: Фильтры поиска -->
     <div class="archive-filters-wrap">
         <form method="get" class="archive-filters archive-filters--pretty">
-            
-            {# Заголовок поиска #}
             <div class="search-banner">
                 <div class="search-banner-icon">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -65,10 +56,7 @@
                 </div>
             </div>
 
-            {# Поля фильтрации #}
             <div class="filter-grid">
-                
-                {# Поле: Поиск по названию #}
                 <div class="filter-group filter-search">
                     <label for="q" class="form-label">Поиск</label>
                     <div class="input-icon-wrap">
@@ -77,115 +65,101 @@
                     </div>
                 </div>
 
-                {# Поле: Фильтр по году #}
                 <div class="filter-group filter-year">
                     <label for="year" class="form-label">Год</label>
                     <select id="year" name="year">
-                        <option value="">Все</option>  {# Все годы #}
-                        {% for year in years %}
-                            {# Подсвечиваем выбранный год #}
-                            <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                        <option value="">Все</option>
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
                     </select>
                 </div>
 
-                {# Поле: Фильтр по тегу #}
                 <div class="filter-group filter-category">
                     <label for="tag" class="form-label">Тег</label>
                     <select id="tag" name="tag">
-                        <option value="">Все теги</option>  {# Все теги #}
+                        <option value="">Все теги</option>
                         {% for tag in tags %}
-                            {# Подсвечиваем выбранный тег #}
                             <option value="{{ tag.slug }}" {% if request.GET.tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
 
-            {# Кнопки управления фильтрами #}
             <div class="filter-actions filter-actions--pretty">
-                <button type="submit" class="btn-primary-custom">Фильтровать</button>  {# Применить фильтры #}
-                <a href="{% url 'blog:archive' %}" class="btn-secondary-custom">Сбросить</a>  {# Очистить все фильтры #}
+                <button type="submit" class="btn-primary-custom">Фильтровать</button>
+                <a href="{% url 'blog:archive' %}" class="btn-secondary-custom">Сбросить</a>
             </div>
         </form>
     </div>
 
-    {# Блок: Список статей #}
+    <!-- Список статей -->
     {% if articles %}
         <div class="archive-grid">
-            {# Перебираем все статьи #}
             {% for article in articles %}
                 <article class="archive-card archive-card--modern">
-                    
-                    {# Изображение статьи (если есть) #}
                     {% if article.image %}
                         <a href="{% url 'blog:article_detail' article.slug %}" class="archive-card-media">
                             <img src="{{ article.image.url }}" alt="{{ article.title }}">
                         </a>
                     {% endif %}
 
-                    {# Информация о статье #}
                     <div class="archive-card-body">
-                        {# Верхняя часть: тип и дата #}
                         <div class="archive-card-topline">
                             <span class="tag-pill">Статья</span>
                             <span class="archive-date">{{ article.publish|date:"d M Y" }}</span>
                         </div>
 
-                        {# Заголовок статьи (ссылка) #}
                         <h2 class="archive-card-title">
                             <a href="{% url 'blog:article_detail' article.slug %}">{{ article.title }}</a>
                         </h2>
 
-                        {# Краткое описание (обрезаем до 180 символов) #}
                         <p class="archive-card-text">
                             {{ article.content|striptags|truncatechars:180 }}
                         </p>
 
-                        {# Теги статьи #}
-                        <div class="archive-meta">
-                            {% if article.tags.all %}
+                        <!-- Теги статьи (ссылки с сохранением текущих фильтров) -->
+                        {% if article.tags.all %}
+                            <div class="archive-meta">
                                 <div class="archive-tags">
                                     {% for tag in article.tags.all %}
-                                        <a href="{% querystring tag=tag.slug page=None %}" class="tag-pill">{{ tag.name }}</a>
+                                        {# Строим ссылку с параметром tag, сохраняя остальные GET-параметры #}
+                                        {% with current_q=request.GET.q current_year=request.GET.year %}
+                                            <a href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_year %}year={{ current_year }}&{% endif %}tag={{ tag.slug }}" class="tag-pill">{{ tag.name }}</a>
+                                        {% endwith %}
                                     {% endfor %}
                                 </div>
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% endif %}
                     </div>
                 </article>
             {% endfor %}
         </div>
 
-        {# Блок: Пагинация (переключение страниц) #}
+        <!-- Пагинация (стандартный подход без querystring) -->
         {% if is_paginated %}
             <div class="pagination-container">
                 <nav class="pagination-nav">
                     <ul class="pagination-list">
-                        {# Кнопка "В начало" #}
                         {% if page_obj.has_previous %}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="{% querystring page=1 %}">«</a>
+                                <a class="pagination-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">«</a>
                             </li>
-                            {# Кнопка "Назад" #}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="{% querystring page=page_obj.previous_page_number %}">‹</a>
+                                <a class="pagination-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">‹</a>
                             </li>
                         {% endif %}
 
-                        {# Текущая страница / Всего страниц #}
                         <li class="pagination-item active">
                             <span class="pagination-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
                         </li>
 
-                        {# Кнопка "Вперёд" #}
                         {% if page_obj.has_next %}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="{% querystring page=page_obj.next_page_number %}">›</a>
+                                <a class="pagination-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">›</a>
                             </li>
-                            {# Кнопка "В конец" #}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="{% querystring page=page_obj.paginator.num_pages %}">»</a>
+                                <a class="pagination-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">»</a>
                             </li>
                         {% endif %}
                     </ul>
@@ -193,7 +167,6 @@
             </div>
         {% endif %}
 
-    {# Если статей нет - показываем сообщение #}
     {% else %}
         <div class="empty-state">
             <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>

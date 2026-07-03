@@ -1,0 +1,83 @@
+{% extends "blog/base.html" %}
+
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Демонстрация Marshmallow валидации</h2>
+    <p class="text-muted">Продвинутая валидация с использованием библиотеки Marshmallow</p>
+    <hr>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                    <div class="text-danger">
+                        {% for error in field.errors %}
+                            <small>{{ error }}</small><br>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+        <button type="submit" class="btn btn-primary">Проверить данные</button>
+        <a href="{% url 'blog:demo_marshmallow' %}" class="btn btn-secondary">Очистить</a>
+    </form>
+    
+    {% if result %}
+        <div class="alert alert-success mt-4">
+            <h5>Успешная валидация!</h5>
+            <p class="mb-0">Данные прошли все проверки:</p>
+            <pre class="mt-2">{{ result|pprint }}</pre>
+        </div>
+    {% endif %}
+    
+    <div class="mt-5">
+        <h5>Примеры для тестирования:</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Валидные данные</h6>
+                        <ul class="mb-0">
+                            <li>username: <code>new_user</code> (3-20 символов)</li>
+                            <li>email: <code>new@example.com</code> (корректный email)</li>
+                            <li>password: <code>strongpassword123</code> (минимум 8 символов)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <h6 class="card-title">Невалидные данные</h6>
+                        <ul class="mb-0">
+                            <li>username: <code>a</code> (слишком короткий)</li>
+                            <li>email: <code>invalid-email</code> (неверный формат)</li>
+                            <li>password: <code>123</code> (слишком короткий)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

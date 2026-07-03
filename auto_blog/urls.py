@@ -15,7 +15,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Основное приложение блога
-    path('', include('blog.urls')),
+    path('blog/', include('blog.urls')),  
 ]
 
 # Обслуживание загруженных медиа-файлов в режиме разработки
