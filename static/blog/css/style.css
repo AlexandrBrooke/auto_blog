@@ -887,6 +887,78 @@ h1, h2, h3, h4, h5 {
 }
 
 /* ============================================================
+   СТРАНИЦЫ АУТЕНТИФИКАЦИИ (регистрация / вход)
+   ============================================================ */
+.auth-container {
+    max-width: 480px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.auth-title {
+    font-size: 28px;
+    text-align: center;
+    margin-bottom: 24px;
+    color: #fff;
+}
+
+.auth-form .form-group {
+    margin-bottom: 20px;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    background: var(--bg-body);
+    color: var(--text-primary);
+    font-size: 16px;
+    transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--link-color);
+    box-shadow: 0 0 0 3px rgba(126, 165, 255, 0.15);
+}
+
+.auth-form .field-errors {
+    color: #f87171;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+
+.auth-form .form-hint {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    display: block;
+    margin-top: 6px;
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 24px;
+    color: var(--text-secondary);
+}
+
+.auth-links a {
+    color: var(--link-color);
+    font-weight: 500;
+}
+
+.auth-links a:hover {
+    color: var(--link-hover);
+    text-decoration: underline;
+}
+
+/* ============================================================
    АДАПТИВНОСТЬ
    ============================================================ */
 @media (max-width: 1100px) {

@@ -1,0 +1,24 @@
+{% extends 'blog/base.html' %}
+
+{% block title %}Вход — DrivePro{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <h1 class="auth-title">Вход</h1>
+    <form method="post" class="auth-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field.label_tag }}
+                {{ field }}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn-primary-custom">Войти</button>
+    </form>
+    <p class="auth-links">
+        Нет аккаунта? <a href="{% url 'users:register' %}">Зарегистрироваться</a>
+    </p>
+</div>
+{% endblock %}

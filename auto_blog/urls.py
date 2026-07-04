@@ -9,6 +9,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.urls import path, include
 
 urlpatterns = [
     # Панель администратора Django
@@ -16,6 +17,8 @@ urlpatterns = [
     
     # Основное приложение блога
     path('blog/', include('blog.urls')),  
+    
+    path('accounts/', include('users.urls')),  
 ]
 
 # Обслуживание загруженных медиа-файлов в режиме разработки
