@@ -1,23 +1,14 @@
 {% extends "blog/base.html" %}
 {% load static %}
 
-{# Заголовок страницы = название статьи #}
 {% block title %}{{ article.title }} — DrivePro{% endblock %}
 
-{# Основное содержимое #}
 {% block content %}
-
-{# Двухколоночная верстка #}
 <div class="page-layout">
-    
-    {# Левая колонка: статья и комментарии #}
     <main class="content-area article-page">
         <article class="article-shell">
-            
-            {# Заголовок статьи #}
             <h1 class="article-title">{{ article.title }}</h1>
 
-            {# Информация о статье: автор, дата, просмотры, комментарии #}
             <div class="article-meta">
                 <span>Автор: {{ article.author.username }}</span>
                 <span>{{ article.publish|date:"d.m.Y H:i" }}</span>
@@ -25,28 +16,45 @@
                 <span>{{ comments|length }} комментариев</span>
             </div>
 
-            {# Изображение статьи (если есть) #}
             {% if article.image %}
                 <img src="{{ article.image.url }}" alt="{{ article.title }}" class="article-image">
             {% endif %}
 
-            {# Текст статьи #}
             <div class="article-content">
                 {{ article.content|linebreaks }}
             </div>
 
-            {# Блок: Лайки #}
-            <div class="article-actions">
-                <form method="post" action="{% url 'blog:like_article' article.slug %}">
-                    {% csrf_token %}
-                    {# Кнопка лайка: активная если пользователь уже лайкнул #}
-                    <button type="submit" class="like-btn {% if user in article.likes.all %}like-btn-active{% else %}like-btn-inactive{% endif %}">
-                        ♥ {{ article.likes.count }}
+            <div class="article-actions" role="group" aria-label="Действия со статьей">
+                {% if user.is_authenticated %}
+                    <button type="button" 
+                            class="like-btn {% if user in article.likes.all %}like-btn-active{% else %}like-btn-inactive{% endif %}"
+                            data-slug="{{ article.slug }}"
+                            aria-label="{% if user in article.likes.all %}Убрать лайк статье «{{ article.title }}»{% else %}Поставить лайк статье «{{ article.title }}»{% endif %}"
+                            aria-pressed="{% if user in article.likes.all %}true{% else %}false{% endif %}"
+                            title="{% if user in article.likes.all %}Убрать лайк{% else %}Поставить лайк{% endif %}">
+                        <span aria-hidden="true">♥</span>
+                        <span class="like-count">{{ article.likes.count }}</span>
+                        <span class="visually-hidden">
+                            {% if user in article.likes.all %}
+                                (лайк поставлен)
+                            {% else %}
+                                (лайк не поставлен)
+                            {% endif %}
+                        </span>
                     </button>
-                </form>
+                {% else %}
+                    <div class="like-login-prompt">
+                        <a href="{% url 'users:login' %}?next={{ request.path }}" class="like-btn like-btn-inactive">
+                            <span aria-hidden="true">♥</span>
+                            <span class="like-count">{{ article.likes.count }}</span>
+                        </a>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-top: 6px;">
+                            <a href="{% url 'users:login' %}?next={{ request.path }}">Войдите</a>, чтобы поставить лайк
+                        </p>
+                    </div>
+                {% endif %}
             </div>
 
-            {# Блок: Теги статьи #}
             <div class="article-tags">
                 {% for tag in article.tags.all %}
                     <a href="{{ tag.get_absolute_url }}" class="tag-pill">{{ tag.name }}</a>
@@ -56,57 +64,49 @@
             </div>
         </article>
 
-        {# Секция: Комментарии #}
         <section class="comments-section">
             <h2 class="page-title">Комментарии</h2>
 
-            {# Перебираем все комментарии #}
             {% for comment in comments %}
                 <div class="comment-card">
                     <div class="comment-card-body">
-                        <h3 class="comment-name">{{ comment.name }}</h3>  {# Имя автора #}
-                        <div class="comment-date">{{ comment.created|date:"d.m.Y H:i" }}</div>  {# Дата #}
-                        <p class="comment-text">{{ comment.body|linebreaks }}</p>  {# Текст #}
+                        <h3 class="comment-name">{{ comment.name }}</h3>
+                        <div class="comment-date">{{ comment.created|date:"d.m.Y H:i" }}</div>
+                        <p class="comment-text">{{ comment.body|linebreaks }}</p>
                     </div>
                 </div>
             {% empty %}
-                {# Если комментариев нет #}
                 <div class="empty-state">
                     <p class="empty-state-text">Комментариев пока нет.</p>
                 </div>
             {% endfor %}
         </section>
 
-        {# Секция: Форма добавления комментария #}
         <section class="comment-form-section">
             <h2 class="page-title">Добавить комментарий</h2>
 
             <form method="post" class="comment-form">
-                {% csrf_token %}  {# Защита от CSRF #}
-                {{ form.non_field_errors }}  {# Ошибки формы #}
+                {% csrf_token %}
+                {{ form.non_field_errors }}
 
-                {# Поле: Имя #}
                 <div class="form-group">
                     {{ form.name.label_tag }}
                     <div class="form-field">{{ form.name }}</div>
                     <div class="field-errors">{{ form.name.errors }}</div>
                 </div>
 
-                {# Поле: Email #}
                 <div class="form-group">
                     {{ form.email.label_tag }}
                     <div class="form-field">{{ form.email }}</div>
                     <div class="field-errors">{{ form.email.errors }}</div>
                 </div>
 
-                {# Поле: Текст комментария #}
                 <div class="form-group">
                     {{ form.body.label_tag }}
                     <div class="form-field">{{ form.body }}</div>
                     <div class="field-errors">{{ form.body.errors }}</div>
                 </div>
 
-                {# Кнопка отправки #}
                 <div class="form-actions">
                     <button type="submit" class="btn-primary-custom">Отправить</button>
                 </div>
@@ -114,22 +114,17 @@
         </section>
     </main>
 
-    {# Правая колонка: Сайдбар #}
     <aside class="sidebar-area">
-        
-        {# Блок: Последние статьи #}
         <div class="sidebar">
             <h5>Последние статьи</h5>
             <div class="recent-list">
                 {% for item in latest_articles %}
                     <a href="{{ item.get_absolute_url }}" class="recent-article">
-                        {# Изображение или заглушка #}
                         {% if item.image %}
                             <img src="{{ item.image.url }}" class="article-img" alt="{{ item.title }}">
                         {% else %}
                             <div class="article-img article-img-empty"></div>
                         {% endif %}
-                        {# Название и дата #}
                         <div class="recent-article-meta">
                             <div class="recent-article-title">{{ item.title|truncatechars:36 }}</div>
                             <div class="recent-article-date">{{ item.publish|date:"d M Y" }}</div>
@@ -141,7 +136,6 @@
             </div>
         </div>
 
-        {# Блок: Теги #}
         <div class="sidebar">
             <h5>Теги</h5>
             <div class="tag-cloud">
@@ -154,4 +148,85 @@
         </div>
     </aside>
 </div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const likeBtn = document.querySelector('.like-btn');
+    if (!likeBtn) return;
+    
+    likeBtn.addEventListener('click', function() {
+        const slug = this.dataset.slug;
+        const csrfToken = document.querySelector('meta[name=csrf-token]')?.content;
+        
+        if (!csrfToken) {
+            console.error('CSRF token not found!');
+            alert('Ошибка безопасности. Пожалуйста, обновите страницу.');
+            return;
+        }
+        
+        const url = "{% url 'blog:like_article' article.slug %}";
+        console.log('Like URL:', url);
+        
+        this.disabled = true;
+        this.style.opacity = '0.7';
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Error response:', text);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.error) {
+                console.error('Server error:', data.error);
+                alert('Ошибка: ' + data.error);
+                return;
+            }
+            
+            const likeCount = this.querySelector('.like-count');
+            if (likeCount) {
+                likeCount.textContent = data.likes;
+            }
+            
+            const title = '{{ article.title|escapejs }}';
+            if (data.liked) {
+                this.classList.remove('like-btn-inactive');
+                this.classList.add('like-btn-active');
+                this.setAttribute('aria-pressed', 'true');
+                this.setAttribute('aria-label', `Убрать лайк статье «${title}»`);
+            } else {
+                this.classList.remove('like-btn-active');
+                this.classList.add('like-btn-inactive');
+                this.setAttribute('aria-pressed', 'false');
+                this.setAttribute('aria-label', `Поставить лайк статье «${title}»`);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при обработке лайка. Пожалуйста, попробуйте позже.');
+        })
+        .finally(() => {
+            this.disabled = false;
+            this.style.opacity = '1';
+        });
+    });
+});
+</script>
 {% endblock %}

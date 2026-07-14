@@ -1,44 +1,31 @@
 {% extends "blog/base.html" %}
 {% load static %}
 
-{# Заголовок страницы #}
 {% block title %}Редактировать статью — DrivePro{% endblock %}
 
-{# Основное содержимое #}
 {% block content %}
-
-{# Секция: Форма редактирования статьи #}
 <section class="article-form-page">
-    
-    {# Шапка страницы #}
     <div class="page-head">
-        <p class="hero-kicker"> Редактор материалов</p>
+        <p class="hero-kicker">Редактор материалов</p>
         <h1 class="page-title edit-title">Редактировать статью</h1>
         <p class="page-lead">
             Обновите заголовок, текст, теги или изображение статьи.
         </p>
     </div>
 
-    {# Форма для редактирования статьи #}
     <form method="post" enctype="multipart/form-data" class="article-form" novalidate>
-        
-        {# Защита от CSRF-атак #}
         {% csrf_token %}
-        
-        {# Ошибки формы (не связанные с конкретными полями) #}
         {{ form.non_field_errors }}
 
-        {# ===== Поле: Заголовок ===== #}
         <div class="form-group">
-            {{ form.title.label_tag }}          {# Подпись к полю #}
-            <div class="form-field">{{ form.title }}</div>  {# Поле ввода #}
-            <div class="field-errors">{{ form.title.errors }}</div>  {# Ошибки #}
+            {{ form.title.label_tag }}
+            <div class="form-field">{{ form.title }}</div>
+            <div class="field-errors">{{ form.title.errors }}</div>
             {% if form.title.help_text %}
-                <small class="form-hint">{{ form.title.help_text }}</small>  {# Подсказка #}
+                <small class="form-hint">{{ form.title.help_text }}</small>
             {% endif %}
         </div>
 
-        {# ===== Поле: Слаг (URL) ===== #}
         <div class="form-group">
             {{ form.slug.label_tag }}
             <div class="form-field">{{ form.slug }}</div>
@@ -48,7 +35,6 @@
             {% endif %}
         </div>
 
-        {# ===== Поле: Категория ===== #}
         <div class="form-group">
             {{ form.category.label_tag }}
             <div class="form-field">{{ form.category }}</div>
@@ -58,7 +44,6 @@
             {% endif %}
         </div>
 
-        {# ===== Поле: Теги ===== #}
         <div class="form-group">
             {{ form.tags.label_tag }}
             <div class="form-field">{{ form.tags }}</div>
@@ -68,13 +53,11 @@
             {% endif %}
         </div>
 
-        {# ===== Поле: Изображение ===== #}
         <div class="form-group">
             {{ form.image.label_tag }}
             <div class="form-field">{{ form.image }}</div>
             <div class="field-errors">{{ form.image.errors }}</div>
 
-            {# Если у статьи есть изображение - показываем его #}
             {% if article.image %}
                 <div class="current-image-wrap">
                     <small class="form-hint">Текущее изображение:</small>
@@ -82,13 +65,11 @@
                 </div>
             {% endif %}
 
-            {# Подсказка для поля изображения #}
             {% if form.image.help_text %}
                 <small class="form-hint">{{ form.image.help_text }}</small>
             {% endif %}
         </div>
 
-        {# ===== Поле: Содержание статьи ===== #}
         <div class="form-group">
             {{ form.content.label_tag }}
             <div class="form-field">{{ form.content }}</div>
@@ -98,7 +79,6 @@
             {% endif %}
         </div>
 
-        {# ===== Поле: Статус (черновик/опубликовано) ===== #}
         <div class="form-group">
             {{ form.status.label_tag }}
             <div class="form-field">{{ form.status }}</div>
@@ -108,12 +88,8 @@
             {% endif %}
         </div>
 
-        {# ===== Кнопки управления ===== #}
         <div class="form-actions">
-            {# Кнопка сохранения изменений #}
             <button type="submit" class="btn-action btn-action-primary">Обновить</button>
-            
-            {# Ссылка на отмену - возврат к статье #}
             <a href="{{ article.get_absolute_url }}" class="btn-action btn-action-secondary">Отмена</a>
         </div>
     </form>

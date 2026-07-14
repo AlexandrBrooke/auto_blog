@@ -3,10 +3,7 @@
 {% block title %}Архив — DrivePro{% endblock %}
 
 {% block content %}
-
 <section class="archive-page">
-    
-    <!-- Блок с заголовком архива -->
     <div class="home-hero home-hero--compact archive-hero">
         <div class="home-hero-copy">
             <p class="hero-kicker">Архив материалов</p>
@@ -17,7 +14,6 @@
         </div>
     </div>
 
-    <!-- Блок: Категории -->
     {% if categories %}
         <section class="archive-categories">
             <div class="section-head">
@@ -41,7 +37,6 @@
         </section>
     {% endif %}
 
-    <!-- Блок: Фильтры поиска -->
     <div class="archive-filters-wrap">
         <form method="get" class="archive-filters archive-filters--pretty">
             <div class="search-banner">
@@ -93,7 +88,6 @@
         </form>
     </div>
 
-    <!-- Список статей -->
     {% if articles %}
         <div class="archive-grid">
             {% for article in articles %}
@@ -118,12 +112,10 @@
                             {{ article.content|striptags|truncatechars:180 }}
                         </p>
 
-                        <!-- Теги статьи (ссылки с сохранением текущих фильтров) -->
                         {% if article.tags.all %}
                             <div class="archive-meta">
                                 <div class="archive-tags">
                                     {% for tag in article.tags.all %}
-                                        {# Строим ссылку с параметром tag, сохраняя остальные GET-параметры #}
                                         {% with current_q=request.GET.q current_year=request.GET.year %}
                                             <a href="?{% if current_q %}q={{ current_q }}&{% endif %}{% if current_year %}year={{ current_year }}&{% endif %}tag={{ tag.slug }}" class="tag-pill">{{ tag.name }}</a>
                                         {% endwith %}
@@ -136,30 +128,39 @@
             {% endfor %}
         </div>
 
-        <!-- Пагинация (стандартный подход без querystring) -->
         {% if is_paginated %}
             <div class="pagination-container">
-                <nav class="pagination-nav">
+                <nav class="pagination-nav" aria-label="Навигация по страницам">
                     <ul class="pagination-list">
                         {% if page_obj.has_previous %}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">«</a>
+                                <a class="pagination-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Первая страница">
+                                    <span aria-hidden="true">«</span>
+                                </a>
                             </li>
                             <li class="pagination-item">
-                                <a class="pagination-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">‹</a>
+                                <a class="pagination-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Предыдущая страница">
+                                    <span aria-hidden="true">‹</span>
+                                </a>
                             </li>
                         {% endif %}
 
                         <li class="pagination-item active">
-                            <span class="pagination-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+                            <span class="pagination-link" aria-current="page">
+                                {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                            </span>
                         </li>
 
                         {% if page_obj.has_next %}
                             <li class="pagination-item">
-                                <a class="pagination-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">›</a>
+                                <a class="pagination-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Следующая страница">
+                                    <span aria-hidden="true">›</span>
+                                </a>
                             </li>
                             <li class="pagination-item">
-                                <a class="pagination-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">»</a>
+                                <a class="pagination-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Последняя страница">
+                                    <span aria-hidden="true">»</span>
+                                </a>
                             </li>
                         {% endif %}
                     </ul>

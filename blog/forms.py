@@ -4,13 +4,10 @@ import re
 from marshmallow import Schema, fields, ValidationError, validates_schema
 
 
-# ============================================================
-# БАЗОВАЯ ВАЛИДАЦИЯ ДАННЫХ
-# ============================================================
 def validate_form_data(data):
     """
-    Функция принимает словарь с данными формы и возвращает
-    словарь с ошибками (пустой, если все данные валидны).
+    Базовая валидация данных формы.
+    Возвращает словарь с ошибками или пустой словарь.
     """
     errors = {}
 
@@ -18,18 +15,15 @@ def validate_form_data(data):
     email = data.get('email', '')
     age_str = data.get('age', '')
 
-    # Проверка имени пользователя
     if not username or len(username) < 3 or len(username) > 20:
         errors['username'] = 'Имя пользователя должно быть от 3 до 20 символов.'
     elif not re.match(r'^[a-zA-Z0-9_]+$', username):
         errors['username'] = 'Имя пользователя содержит недопустимые символы.'
 
-    # Проверка email
     email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
     if not email or not re.match(email_pattern, email):
         errors['email'] = 'Пожалуйста, введите корректный адрес электронной почты.'
 
-    # Проверка возраста
     try:
         age = int(age_str)
         if age < 0 or age > 120:
@@ -40,9 +34,6 @@ def validate_form_data(data):
     return errors
 
 
-# ============================================================
-# СХЕМА ВАЛИДАЦИИ MARSHMALLOW
-# ============================================================
 class UserRegistrationSchema(Schema):
     username = fields.Str(required=True, validate=lambda x: 3 <= len(x) <= 20)
     email = fields.Email(required=True)
@@ -58,22 +49,22 @@ class UserRegistrationSchema(Schema):
             )
 
 
-# ============================================================
-# ФОРМА ДЛЯ СТАТЬИ
-# ============================================================
 class ArticleForm(forms.ModelForm):
-    """
-    Форма для работы со статьями.
-    Используется в: add_article.html, edit_article.html
-    """
-    
     class Meta:
         model = Article
-        fields = ['title', 'slug', 'category', 'tags', 'image', 'content', 'status']
+        fields = ['title', 'category', 'tags', 'image', 'content', 'status']
+        
+        labels = {
+            'title': 'Заголовок',
+            'category': 'Категория',
+            'tags': 'Теги',
+            'image': 'Изображение',
+            'content': 'Содержание',
+            'status': 'Статус',
+        }
         
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': 'Введите заголовок статьи'}),
-            'slug': forms.TextInput(attrs={'placeholder': 'auto-generated при пустом поле'}),
             'category': forms.Select(),
             'tags': forms.SelectMultiple(),
             'image': forms.ClearableFileInput(),
@@ -83,9 +74,8 @@ class ArticleForm(forms.ModelForm):
         
         help_texts = {
             'title': 'Краткий и ёмкий заголовок статьи.',
-            'slug': 'URL-адрес. Если пуст — будет сгенерирован автоматически.',
             'image': 'Главное изображение. Рекомендуемый размер: 1200x630 px.',
-            'content': 'Текст статьи. Поддерживается Markdown.',
+            'content': 'Текст статьи.',
             'status': 'Черновик — для редактирования, Опубликовано — видно всем.',
         }
 
@@ -96,30 +86,20 @@ class ArticleForm(forms.ModelForm):
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
-        if title and len(title) < 5:
-            raise forms.ValidationError('Заголовок должен содержать минимум 5 символов.')
-        if title and len(title) > 200:
-            raise forms.ValidationError('Заголовок не может быть длиннее 200 символов.')
+        if title:
+            if len(title) < 5:
+                raise forms.ValidationError('Заголовок должен содержать минимум 5 символов.')
+            if len(title) > 200:
+                raise forms.ValidationError('Заголовок не может быть длиннее 200 символов.')
         return title
-    
-    def clean_slug(self):
-        slug = self.cleaned_data.get('slug')
-        if slug:
-            if not re.match(r'^[a-z0-9-]+$', slug):
-                raise forms.ValidationError(
-                    'Slug может содержать только строчные буквы, цифры и дефисы.'
-                )
-            if len(slug) < 3:
-                raise forms.ValidationError('Slug должен быть минимум 3 символа.')
-        return slug
-    
+
     def clean_content(self):
         content = self.cleaned_data.get('content')
-        if content and len(content) < 20:
-            raise forms.ValidationError(
-                'Содержание статьи должно быть не менее 20 символов.'
-            )
         if content:
+            if len(content) < 20:
+                raise forms.ValidationError(
+                    'Содержание статьи должно быть не менее 20 символов.'
+                )
             url_count = len(re.findall(r'http[s]?://', content))
             if url_count > 10:
                 raise forms.ValidationError(
@@ -132,14 +112,12 @@ class ArticleForm(forms.ModelForm):
         
         class ArticleSchema(Schema):
             title = fields.Str(required=True, validate=lambda x: 5 <= len(x) <= 200)
-            slug = fields.Str(validate=lambda x: re.match(r'^[a-z0-9-]+$', x) if x else True)
             content = fields.Str(required=True, validate=lambda x: len(x) >= 20)
         
         schema = ArticleSchema()
         try:
             validation_data = {
                 'title': cleaned_data.get('title'),
-                'slug': cleaned_data.get('slug'),
                 'content': cleaned_data.get('content'),
             }
             validation_data = {k: v for k, v in validation_data.items() if v is not None}
@@ -152,15 +130,7 @@ class ArticleForm(forms.ModelForm):
         return cleaned_data
 
 
-# ============================================================
-# ФОРМА ДЛЯ КОММЕНТАРИЯ
-# ============================================================
 class CommentForm(forms.ModelForm):
-    """
-    Форма для добавления комментариев.
-    Используется в: article_detail.html
-    """
-    
     class Meta:
         model = Comment
         fields = ['name', 'email', 'body']
@@ -231,9 +201,6 @@ class CommentForm(forms.ModelForm):
         return body
 
 
-# ============================================================
-# ДЕМОНСТРАЦИОННАЯ ФОРМА С MARSHMALLOW
-# ============================================================
 class MarshmallowDemoForm(forms.Form):
     username = forms.CharField(max_length=20, label='Имя пользователя')
     email = forms.EmailField(label='Email')
@@ -259,13 +226,9 @@ class MarshmallowDemoForm(forms.Form):
         return cleaned_data
 
 
-# ============================================================
-# ДЕМОНСТРАЦИОННАЯ ФУНКЦИЯ
-# ============================================================
 def demo_validation():
     """
     Демонстрация работы всех методов валидации.
-    Можно вызвать из консоли или тестов.
     """
     print("=" * 60)
     print("ДЕМОНСТРАЦИЯ ВАЛИДАЦИИ ДАННЫХ")

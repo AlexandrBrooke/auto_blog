@@ -28,7 +28,6 @@
                        href="{% url 'blog:add_article' %}">Написать статью</a>
                     <span class="nav-user">Привет, <strong>{{ user.username }}</strong></span>
                     
-                    {# === ИСПРАВЛЕННЫЙ ВЫХОД (POST-форма) === #}
                     <form action="{% url 'users:logout' %}" method="post" style="display: inline;">
                         {% csrf_token %}
                         <button type="submit" class="nav-link" style="background: none; border: none; color: #bbb; cursor: pointer; padding: 4px 0; font: inherit;">
@@ -44,7 +43,6 @@
     </header>
 
     <main class="site-container page-layout">
-        <!-- БЛОК ДЛЯ СООБЩЕНИЙ (flash) -->
         {% if messages %}
             <div class="messages">
                 {% for message in messages %}

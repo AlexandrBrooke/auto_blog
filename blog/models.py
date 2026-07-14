@@ -5,16 +5,11 @@ from django.conf import settings
 from slugify import slugify as slugify_cyrillic
 
 
-# ============================================================
-# МОДЕЛЬ: Категория
-# Для группировки статей по темам
-# ============================================================
 class Category(models.Model):
     """
     Категория для статей.
     Примеры: 'Обзоры', 'Новости', 'Тест-драйвы'
     """
-    
     name = models.CharField(max_length=120, unique=True)
     slug = models.SlugField(max_length=140, unique=True, blank=True)
     description = models.TextField(blank=True)
@@ -36,16 +31,11 @@ class Category(models.Model):
         return reverse("blog:category_articles", kwargs={"slug": self.slug})
 
 
-# ============================================================
-# МОДЕЛЬ: Тег
-# Для ключевых слов статей (поиск, фильтрация)
-# ============================================================
 class Tag(models.Model):
     """
     Тег для статей.
     Примеры: 'BMW', 'Электромобили', 'Кроссоверы'
     """
-    
     name = models.CharField(max_length=80, unique=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
 
@@ -66,32 +56,22 @@ class Tag(models.Model):
         return reverse("blog:tag_articles", kwargs={"slug": self.slug})
 
 
-# ============================================================
-# МЕНЕДЖЕР: Для фильтрации опубликованных статей
-# ============================================================
 class PublishedManager(models.Manager):
     """Менеджер для получения только опубликованных статей"""
-    
     def get_queryset(self):
         return super().get_queryset().filter(status="published")
 
 
-# ============================================================
-# МОДЕЛЬ: Статья
-# Основная модель блога
-# ============================================================
 class Article(models.Model):
     """
     Статья блога.
     Содержит заголовок, текст, изображение и мета-информацию.
     """
     
-    # ===== СТАТУСЫ СТАТЬИ =====
     class Status(models.TextChoices):
         DRAFT = "draft", "Черновик"
         PUBLISHED = "published", "Опубликовано"
 
-    # ===== ПОЛЯ СТАТЬИ =====
     title = models.CharField(max_length=255)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
     content = models.TextField()
@@ -133,7 +113,6 @@ class Article(models.Model):
         default=Status.DRAFT
     )
 
-    # ===== МЕНЕДЖЕРЫ =====
     objects = models.Manager()
     published = PublishedManager()
 
@@ -146,7 +125,6 @@ class Article(models.Model):
         return self.title
 
     def save(self, *args, **kwargs):
-        """При сохранении создаём slug, если он пустой"""
         if not self.slug:
             self.slug = slugify_cyrillic(self.title, separator='-')
         super().save(*args, **kwargs)
@@ -155,16 +133,11 @@ class Article(models.Model):
         return reverse("blog:article_detail", kwargs={"slug": self.slug})
 
 
-# ============================================================
-# МОДЕЛЬ: Комментарий
-# Комментарии к статьям
-# ============================================================
 class Comment(models.Model):
     """
     Комментарий к статье.
     Требует модерации (active = False по умолчанию).
     """
-    
     article = models.ForeignKey(
         Article,
         on_delete=models.CASCADE,

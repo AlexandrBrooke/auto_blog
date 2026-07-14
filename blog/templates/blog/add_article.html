@@ -1,20 +1,14 @@
-{# Шаблон для добавления и редактирования статей #}
 {% extends "blog/base.html" %}
 
-{# Заголовок страницы #}
 {% block title %}
     {% if form.instance.pk %}Редактирование статьи{% else %}Добавить статью{% endif %} — DrivePro
 {% endblock %}
 
-{# Основное содержимое #}
 {% block content %}
-
-{# Шапка страницы #}
 <section class="article-form-page">
     <div class="page-head">
-        <p class="hero-kicker"> Редактор материалов</p>
+        <p class="hero-kicker">Редактор материалов</p>
         <h1 class="page-title">
-            {# Если есть id статьи - редактируем, иначе - создаём #}
             {% if form.instance.pk %}Редактирование статьи{% else %}Добавить статью{% endif %}
         </h1>
         <p class="page-lead">
@@ -22,36 +16,19 @@
         </p>
     </div>
 
-    {# Форма для ввода данных #}
     <form method="post" enctype="multipart/form-data" class="article-form" novalidate>
-        
-        {# Защита от подделки запросов #}
         {% csrf_token %}
-        
-        {# Ошибки формы (не относящиеся к конкретным полям) #}
         {{ form.non_field_errors }}
 
-        {# Поле: Заголовок #}
         <div class="form-group">
-            {{ form.title.label_tag }}          {# Подпись к полю #}
-            <div class="form-field">{{ form.title }}</div>  {# Поле ввода #}
-            <div class="field-errors">{{ form.title.errors }}</div>  {# Ошибки #}
+            {{ form.title.label_tag }}
+            <div class="form-field">{{ form.title }}</div>
+            <div class="field-errors">{{ form.title.errors }}</div>
             {% if form.title.help_text %}
-                <small class="form-hint">{{ form.title.help_text }}</small>  {# Подсказка #}
+                <small class="form-hint">{{ form.title.help_text }}</small>
             {% endif %}
         </div>
 
-        {# Поле: Слаг (URL) #}
-        <div class="form-group">
-            {{ form.slug.label_tag }}
-            <div class="form-field">{{ form.slug }}</div>
-            <div class="field-errors">{{ form.slug.errors }}</div>
-            {% if form.slug.help_text %}
-                <small class="form-hint">{{ form.slug.help_text }}</small>
-            {% endif %}
-        </div>
-
-        {# Поле: Категория #}
         <div class="form-group">
             {{ form.category.label_tag }}
             <div class="form-field">{{ form.category }}</div>
@@ -61,7 +38,6 @@
             {% endif %}
         </div>
 
-        {# Поле: Теги #}
         <div class="form-group">
             {{ form.tags.label_tag }}
             <div class="form-field">{{ form.tags }}</div>
@@ -71,7 +47,6 @@
             {% endif %}
         </div>
 
-        {# Поле: Изображение #}
         <div class="form-group">
             {{ form.image.label_tag }}
             <div class="form-field">{{ form.image }}</div>
@@ -81,7 +56,6 @@
             {% endif %}
         </div>
 
-        {# Поле: Содержание статьи #}
         <div class="form-group">
             {{ form.content.label_tag }}
             <div class="form-field">{{ form.content }}</div>
@@ -91,7 +65,6 @@
             {% endif %}
         </div>
 
-        {# Поле: Статус (черновик/опубликовано) #}
         <div class="form-group">
             {{ form.status.label_tag }}
             <div class="form-field">{{ form.status }}</div>
@@ -101,10 +74,9 @@
             {% endif %}
         </div>
 
-        {# Кнопки управления #}
         <div class="form-actions">
-            <button type="submit" class="btn-primary-custom">Сохранить</button>  {# Отправить форму #}
-            <a href="{% url 'blog:article_list' %}" class="btn-secondary-custom">Отмена</a>  {# Вернуться назад #}
+            <button type="submit" class="btn-primary-custom">Сохранить</button>
+            <a href="{% url 'blog:article_list' %}" class="btn-secondary-custom">Отмена</a>
         </div>
     </form>
 </section>

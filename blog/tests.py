@@ -18,14 +18,15 @@ class ModelTests(TestCase):
             status='published'
         )
         self.assertEqual(Article.objects.count(), 1)
-        self.assertTrue(article.slug)  # slug должен сгенерироваться автоматически
+        self.assertTrue(article.slug)
 
     def test_category_creation(self):
         cat = Category.objects.create(name='Новости')
-        self.assertEqual(cat.slug, 'novosti')  # транслитерация
+        self.assertEqual(cat.slug, 'novosti')
 
 
 class ValidationTests(TestCase):
+    
     def test_basic_validation_valid(self):
         data = {'username': 'user_123', 'email': 'user@example.com', 'age': '25'}
         errors = validate_form_data(data)

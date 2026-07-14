@@ -4,23 +4,19 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404
 from django.views.generic import ListView
+from django.views.decorators.http import require_POST
 
 from .models import Article, Category, Tag
 from .forms import CommentForm, ArticleForm, validate_form_data
 from marshmallow import ValidationError
 
 
-# ============================================================
-# ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ
-# Общие данные для сайдбара (используется во всех представлениях)
-# ============================================================
 def _common_sidebar_data():
     """
-    Возвращает данные, общие для всех страниц:
-    - последние статьи (5 шт.)
+    Возвращает данные для сайдбара:
+    - последние 5 статей
     - все теги
     - все категории
-    Используется в сайдбаре.
     """
     return {
         'latest_articles': Article.published.all()[:5],
@@ -29,15 +25,11 @@ def _common_sidebar_data():
     }
 
 
-# ============================================================
-# ГЛАВНАЯ СТРАНИЦА (СПИСОК СТАТЕЙ)
-# ============================================================
 def article_list(request):
     """
     Главная страница со списком статей.
     Поддерживает поиск по заголовку, содержимому и тегам.
     """
-    
     query = request.GET.get('q', '').strip()
     articles = Article.published.all()
 
@@ -58,14 +50,7 @@ def article_list(request):
     return render(request, 'blog/article_list.html', context)
 
 
-# ============================================================
-# СТАТЬИ ПО КАТЕГОРИИ
-# ============================================================
 def category_articles(request, slug):
-    """
-    Страница со статьями определённой категории.
-    """
-    
     category = get_object_or_404(Category, slug=slug)
     articles = Article.published.filter(category=category)
 
@@ -79,14 +64,7 @@ def category_articles(request, slug):
     return render(request, 'blog/article_list.html', context)
 
 
-# ============================================================
-# СТАТЬИ ПО ТЕГУ
-# ============================================================
 def tag_articles(request, slug):
-    """
-    Страница со статьями с определённым тегом.
-    """
-    
     tag = get_object_or_404(Tag, slug=slug)
     articles = Article.published.filter(tags=tag).distinct()
 
@@ -100,14 +78,7 @@ def tag_articles(request, slug):
     return render(request, 'blog/article_list.html', context)
 
 
-# ============================================================
-# ДЕТАЛЬНАЯ СТРАНИЦА СТАТЬИ
-# ============================================================
 def article_detail(request, slug):
-    """
-    Полная страница статьи с комментариями.
-    """
-    
     article = get_object_or_404(
         Article.objects.select_related('author', 'category').prefetch_related('tags', 'likes'),
         slug=slug
@@ -140,16 +111,8 @@ def article_detail(request, slug):
     return render(request, 'blog/article_detail.html', context)
 
 
-# ============================================================
-# ДОБАВЛЕНИЕ СТАТЬИ (ТОЛЬКО ДЛЯ АВТОРИЗОВАННЫХ)
-# ============================================================
 @login_required
 def add_article(request):
-    """
-    Страница добавления новой статьи.
-    Требуется авторизация.
-    """
-    
     if request.method == 'POST':
         form = ArticleForm(request.POST, request.FILES)
         
@@ -162,7 +125,6 @@ def add_article(request):
             messages.success(request, 'Статья успешно добавлена.')
             return redirect('blog:article_detail', slug=article.slug)
         else:
-            # Отображаем ошибки валидации
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f'{field}: {error}')
@@ -174,16 +136,8 @@ def add_article(request):
     return render(request, 'blog/add_article.html', context)
 
 
-# ============================================================
-# РЕДАКТИРОВАНИЕ СТАТЬИ (ТОЛЬКО ДЛЯ АВТОРОВ)
-# ============================================================
 @login_required
 def edit_article(request, slug):
-    """
-    Страница редактирования статьи.
-    Только автор может редактировать свою статью.
-    """
-    
     article = get_object_or_404(Article, slug=slug)
 
     if article.author != request.user:
@@ -210,14 +164,7 @@ def edit_article(request, slug):
     return render(request, 'blog/edit_article.html', context)
 
 
-# ============================================================
-# АРХИВ СТАТЕЙ (СПИСОК С ФИЛЬТРАЦИЕЙ)
-# ============================================================
 class ArticleArchiveView(ListView):
-    """
-    Архив статей с фильтрацией и пагинацией.
-    """
-    
     model = Article
     template_name = 'blog/archive.html'
     context_object_name = 'articles'
@@ -260,18 +207,12 @@ class ArticleArchiveView(ListView):
         return context
 
 
-# ============================================================
-# ЛАЙК СТАТЬИ (AJAX)
-# ============================================================
 @login_required
+@require_POST
 def like_article(request, slug):
     """
     Обработка лайков через AJAX.
     """
-    
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Метод не поддерживается'}, status=400)
-
     article = get_object_or_404(Article, slug=slug)
 
     if request.user in article.likes.all():
@@ -287,13 +228,7 @@ def like_article(request, slug):
     })
 
 
-# ============================================================
-# ДЕМОНСТРАЦИОННАЯ СТРАНИЦА ВАЛИДАЦИИ
-# ============================================================
 def demo_validation(request):
-    """
-    Демонстрационная страница для проверки работы валидации.
-    """
     errors = {}
     form_data = {}
     
@@ -304,7 +239,6 @@ def demo_validation(request):
             'age': request.POST.get('age', ''),
         }
         
-        # Используем базовую валидацию
         errors = validate_form_data(form_data)
         
         if errors:
@@ -320,13 +254,7 @@ def demo_validation(request):
     return render(request, 'blog/demo_validation.html', context)
 
 
-# ============================================================
-# ДЕМОНСТРАЦИОННАЯ СТРАНИЦА MARSHMALLOW
-# ============================================================
 def demo_marshmallow(request):
-    """
-    Демонстрационная страница для проверки Marshmallow валидации.
-    """
     from .forms import UserRegistrationSchema, MarshmallowDemoForm
     
     result = None
